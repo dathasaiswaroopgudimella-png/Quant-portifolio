@@ -1,0 +1,92 @@
+# ─── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+.Python
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+*.pyc
+
+# ─── Environment Variables (NEVER commit secrets) ─────────────────────────
+.env
+.env.local
+.env.production
+.env.staging
+!.env.example
+
+# ─── Database files ────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Testing / Coverage ───────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+.tox/
+nosetests.xml
+test-results/
+
+# ─── Node.js / Next.js ────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.js
+.pnp/
+.npm/
+.yarn/
+
+# ─── TypeScript build ─────────────────────────────────────────────────────
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ─── OS Files ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# ─── IDE / Editor ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.editorconfig
+
+# ─── Docker ───────────────────────────────────────────────────────────────
+.dockerignore
+
+# ─── Logs ─────────────────────────────────────────────────────────────────
+logs/
+*.log
+pids/
+*.pid
+*.seed
+
+# ─── Distribution / Packaging ─────────────────────────────────────────────
+.eggs/
+*.manifest
+*.spec
+*.tar.gz
+*.zip
+
+# ─── Mypy ─────────────────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json

@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── FRAGMENT Design System ── Google Stitch tokens ── */
+:root {
+  --color-bg-base: #0e0e10;
+  --color-bg-surface: #1c1b1d;
+  --color-bg-elevated: #201f22;
+  --color-border: #464554;
+  --color-border-subtle: rgba(70, 69, 84, 0.4);
+
+  --color-primary: #c0c1ff;
+  --color-primary-dark: #8083ff;
+  --color-primary-foreground: #1000a9;
+
+  --color-accent-green: #4edea3;
+  --color-accent-amber: #ffb95f;
+  --color-accent-red: #ffb4ab;
+
+  --color-text-primary: #e5e1e4;
+  --color-text-secondary: #c7c4d7;
+  --color-text-muted: #908fa0;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+html::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mono everywhere it matters */
+code, pre, kbd, samp, .font-mono {
+  font-family: var(--font-mono) !important;
+}
+
+/* Selection */
+::selection {
+  background: rgba(192, 193, 255, 0.25);
+  color: var(--color-text-primary);
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth transitions on interactive elements */
+a, button {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* ── Utility classes ── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(28, 27, 29, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.glow-purple {
+  box-shadow: 0 0 0 1px rgba(192, 193, 255, 0.15), 0 8px 32px rgba(192, 193, 255, 0.08);
+}
+
+.glow-green {
+  box-shadow: 0 0 0 1px rgba(78, 222, 163, 0.15), 0 8px 32px rgba(78, 222, 163, 0.08);
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(78, 222, 163, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.6s ease both; }
+.animate-fade-in    { animation: fadeIn 0.4s ease both; }
+.animate-pulse-ring { animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, var(--color-text-muted) 0%, var(--color-primary) 50%, var(--color-text-muted) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── FRAGMENT-specific components ── */
+.fragment-card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.fragment-card:hover {
+  border-color: var(--color-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.fragment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  border: 1px solid;
+  line-height: 1.4;
+}
+
+.fragility-low    { color: var(--color-accent-green); background: rgba(78, 222, 163, 0.08); border-color: rgba(78, 222, 163, 0.25); }
+.fragility-medium { color: var(--color-accent-amber); background: rgba(255, 185, 95, 0.08);  border-color: rgba(255, 185, 95, 0.25); }
+.fragility-high   { color: var(--color-accent-red);   background: rgba(255, 180, 171, 0.08); border-color: rgba(255, 180, 171, 0.25); }
+.fragility-critical { color: #ff4d4d; background: rgba(255, 77, 77, 0.08); border-color: rgba(255, 77, 77, 0.3); }
+
+/* Table styles */
+.fragment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+.fragment-table th {
+  padding: 10px 16px;
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-weight: 600;
+}
+.fragment-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(70, 69, 84, 0.2);
+  color: var(--color-text-secondary);
+}
+.fragment-table tr:hover td {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+/* Code editor override */
+textarea.code-editor {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  background: #0a0a0c;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  padding: 1rem;
+  resize: vertical;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+textarea.code-editor:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px rgba(192, 193, 255, 0.15);
+}
+
+/* Grid background */
+.grid-bg {
+  background-image: linear-gradient(to right, #464554 1px, transparent 1px),
+                    linear-gradient(to bottom, #464554 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  opacity: 0.07;
+}

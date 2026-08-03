@@ -1,0 +1,47 @@
+import os
+import logging
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Use SQLite by default for lightweight local development unless POSTGRES_DB is explicitly enabled
+USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() in ("true", "1")
+
+if USE_POSTGRES:
+    db_url = settings.DATABASE_URL
+else:
+    db_url = settings.SQLITE_FALLBACK_URL
+
+engine = create_async_engine(db_url, echo=False, future=True)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+Base = declarative_base()
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+async def init_db() -> None:
+    """Initialize database tables synchronously/asynchronously without blocking."""
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.warning(f"Primary database connection failed ({e}), falling back to SQLite async engine.")
+        fallback_engine = create_async_engine(settings.SQLITE_FALLBACK_URL, echo=False, future=True)
+        async with fallback_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
