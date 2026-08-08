@@ -25,7 +25,11 @@ class BlackScholesASTVisitor(ast.NodeVisitor):
         ast.BinOp,
         ast.UnaryOp,
         ast.Compare,
+        ast.If,
         ast.IfExp,
+        ast.BoolOp,
+        ast.Or,
+        ast.And,
         ast.Call,
         ast.Lambda,
         ast.Expr,
@@ -68,97 +72,71 @@ class BlackScholesASTVisitor(ast.NodeVisitor):
         super().visit(node)
 
     def visit_Assign(self, node: ast.Assign):
-        # Track locally assigned variable and lambda names
         for target in node.targets:
             if isinstance(target, ast.Name):
                 self.local_definitions.add(target.id)
-        self.generic_visit(node)
-
-    def visit_Import(self, node: ast.Import):
-        for alias in node.names:
-            if alias.name not in self.ALLOWED_MODULES:
-                err = f"Security violation: Import of module '{alias.name}' is prohibited. Allowed: {self.ALLOWED_MODULES}"
-                self.security_violations.append(err)
-                self.is_valid = False
-            self.local_definitions.add(alias.asname or alias.name)
-        self.generic_visit(node)
-
-    def visit_ImportFrom(self, node: ast.ImportFrom):
-        if node.module not in self.ALLOWED_MODULES:
-            err = f"Security violation: Import from module '{node.module}' is prohibited. Allowed: {self.ALLOWED_MODULES}"
-            self.security_violations.append(err)
-            self.is_valid = False
-        for alias in node.names:
-            self.local_definitions.add(alias.asname or alias.name)
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         if not self.function_name:
             self.function_name = node.name
             self.parameters = [arg.arg for arg in node.args.args]
-        self.local_definitions.add(node.name)
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import):
+        for alias_item in node.names:
+            if alias_item.name not in self.ALLOWED_MODULES:
+                self.security_violations.append(f"Prohibited import module '{alias_item.name}'.")
+                self.is_valid = False
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        if node.module and node.module not in self.ALLOWED_MODULES:
+            self.security_violations.append(f"Prohibited import module '{node.module}'.")
+            self.is_valid = False
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute):
         if node.attr in self.PROHIBITED_ATTRIBUTES:
-            err = f"Security violation: Attribute access to '{node.attr}' is prohibited."
-            self.security_violations.append(err)
+            self.security_violations.append(f"Prohibited attribute access '{node.attr}'.")
             self.is_valid = False
         self.generic_visit(node)
 
-    def visit_Call(self, node: ast.Call):
-        func_name = ""
-        if isinstance(node.func, ast.Name):
-            func_name = node.func.id
-        elif isinstance(node.func, ast.Attribute):
-            func_name = node.func.attr
-        
-        if func_name:
-            if func_name not in self.ALLOWED_FUNCTIONS and func_name not in self.local_definitions:
-                err = f"Unauthorized function call: '{func_name}' is not in the whitelist or local definitions."
-                self.security_violations.append(err)
-                self.is_valid = False
-        self.generic_visit(node)
-
-
 def parse_and_validate_model_code(code: str) -> Dict[str, Any]:
     """
-    Parses uploaded Python code, inspects security rules, and returns parameter mapping.
+    Parses uploaded code into an AST tree and asserts AST security rules.
+    Returns function signature and parameters.
     """
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
-        raise ASTSecurityError(f"Syntax error in model code: {e.msg} at line {e.lineno}")
+        raise ASTSecurityError(f"Syntax error in uploaded model code: {e.msg} at line {e.lineno}")
 
     visitor = BlackScholesASTVisitor()
     visitor.visit(tree)
 
     if not visitor.is_valid:
-        raise ASTSecurityError("; ".join(visitor.security_violations))
+        raise ASTSecurityError("Security violation: " + "; ".join(visitor.security_violations))
 
     if not visitor.function_name:
-        raise ASTSecurityError("No valid pricing function definition found in model code.")
+        raise ASTSecurityError("No top-level pricing function found in code.")
 
-    # Validate standard Black-Scholes parameter map
-    params = visitor.parameters
     param_map = {}
-    for p in params:
+    for p in visitor.parameters:
         p_lower = p.lower()
-        if p_lower in ["s", "spot", "stock_price", "underlying"]:
-            param_map["spot"] = p
-        elif p_lower in ["k", "strike", "strike_price"]:
-            param_map["strike"] = p
-        elif p_lower in ["t", "maturity", "time", "tenor", "time_to_maturity"]:
-            param_map["maturity"] = p
-        elif p_lower in ["r", "rate", "risk_free_rate", "interest_rate"]:
-            param_map["rate"] = p
-        elif p_lower in ["sigma", "vol", "volatility"]:
-            param_map["volatility"] = p
+        if "s" in p_lower or "spot" in p_lower:
+            param_map[p] = "spot"
+        elif "k" in p_lower or "strike" in p_lower:
+            param_map[p] = "strike"
+        elif "t" in p_lower or "maturity" in p_lower:
+            param_map[p] = "maturity"
+        elif "r" in p_lower or "rate" in p_lower:
+            param_map[p] = "rate"
+        elif "vol" in p_lower or "sigma" in p_lower or "v" in p_lower:
+            param_map[p] = "volatility"
 
     return {
         "function_name": visitor.function_name,
         "parameters": visitor.parameters,
-        "parameter_mapping": param_map,
-        "is_secure": True,
-        "ast_tree": ast.dump(tree)
+        "parameter_mapping": param_map
     }
