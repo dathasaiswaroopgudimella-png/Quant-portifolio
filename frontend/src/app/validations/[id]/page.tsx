@@ -57,7 +57,6 @@ export default function ValidationDetailPage() {
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to load validation report detail.");
-    } font-mono;
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +90,7 @@ export default function ValidationDetailPage() {
   }
 
   const bp = validation.breaking_parameters;
-  const greeks = validation.greek_drifts?.base_greeks || validation.greek_drifts;
+  const greeks = (validation.greek_drifts?.base_greeks || validation.greek_drifts) as { delta?: number; gamma?: number; vega?: number; vega_unit?: number; theta?: number; rho?: number } | null;
   const surface = validation.fragility_surface;
   const riskAttribution = report?.report_data?.risk_attribution || {
     volatility_regime_risk: 72.4,
@@ -198,9 +197,9 @@ export default function ValidationDetailPage() {
 
               <div className="space-y-3 mb-4">
                 {[
-                  { name: "Volatility Regime Sensitivity (∂Error/∂σ)", val: risk_attribution.volatility_regime_risk, color: "#ffb95f" },
-                  { name: "Spot Tail Convexity (∂Error/∂S)", val: risk_attribution.spot_tail_convexity, color: "#4edea3" },
-                  { name: "Interest Rate Shift Sensitivity (∂Error/∂r)", val: risk_attribution.interest_rate_sensitivity, color: "#c0c1ff" },
+                  { name: "Volatility Regime Sensitivity (∂Error/∂σ)", val: riskAttribution.volatility_regime_risk, color: "#ffb95f" },
+                  { name: "Spot Tail Convexity (∂Error/∂S)", val: riskAttribution.spot_tail_convexity, color: "#4edea3" },
+                  { name: "Interest Rate Shift Sensitivity (∂Error/∂r)", val: riskAttribution.interest_rate_sensitivity, color: "#c0c1ff" },
                 ].map((item, i) => (
                   <div key={i} className="space-y-1 font-mono text-xs">
                     <div className="flex justify-between">

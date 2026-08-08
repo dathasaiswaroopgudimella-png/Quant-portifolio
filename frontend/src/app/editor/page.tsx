@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchApi, ModelData, ValidationRunData, AssumptionData } from "@/lib/api";
 import {
@@ -87,7 +88,7 @@ const PRESET_MODELS = [
   },
 ];
 
-export default function ModelEditorPage() {
+function ModelEditorInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const modelIdParam = searchParams?.get("modelId");
@@ -628,5 +629,13 @@ export default function ModelEditorPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function ModelEditorPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-[#c0c1ff] font-mono">Loading editor…</div>}>
+      <ModelEditorInner />
+    </Suspense>
   );
 }
