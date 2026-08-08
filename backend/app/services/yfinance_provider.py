@@ -5,38 +5,39 @@ from typing import Dict, Any, Optional
 
 class YFinanceMarketProvider:
     """
-    Primary free market data provider using yfinance.
-    Retrieves live ticker quotes, 21-day annualized historical volatility, and option chains.
+    Market Data Provider backed by Yahoo Finance (yfinance).
+    Retrieves ticker quotes, 21-day annualized historical volatility (sample std dev ddof=1),
+    and risk-free rate benchmarks.
     """
 
     @staticmethod
     def get_ticker_market_data(ticker_symbol: str = "AAPL") -> Dict[str, Any]:
         """
-        Fetches live spot price and calculates annualized rolling 21-day historical volatility.
+        Fetches live spot price and calculates annualized rolling 21-day sample historical volatility.
         """
         try:
             ticker = yf.Ticker(ticker_symbol)
             hist = ticker.history(period="1mo")
             
             if hist.empty:
-                # Fallback default market snapshot
                 return YFinanceMarketProvider._get_fallback_snapshot(ticker_symbol)
 
-            # Spot price from last close
+            # Spot price from latest close
             spot_price = float(hist["Close"].iloc[-1])
 
-            # Calculate log returns for 21-day volatility
+            # Calculate log returns using sample standard deviation (ddof=1)
             log_returns = np.log(hist["Close"] / hist["Close"].shift(1)).dropna()
-            daily_vol = float(np.std(log_returns))
+            daily_vol = float(np.std(log_returns, ddof=1)) if len(log_returns) > 1 else 0.20
             annualized_vol = float(daily_vol * np.sqrt(252))
 
             return {
                 "ticker": ticker_symbol.upper(),
                 "spot_price": round(spot_price, 2),
                 "historical_volatility_21d": round(annualized_vol, 4),
-                "risk_free_rate": 0.0525,  # Current US 10Y Treasury yield benchmark
+                "risk_free_rate": 0.0525,  # Benchmark US 10Y Treasury yield
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "status": "LIVE"
+                "status": "LIVE",
+                "source": "Yahoo Finance (15-min delayed market data)"
             }
         except Exception as e:
             return YFinanceMarketProvider._get_fallback_snapshot(ticker_symbol, error=str(e))
@@ -57,6 +58,7 @@ class YFinanceMarketProvider:
             "historical_volatility_21d": 0.2250,
             "risk_free_rate": 0.0525,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "status": "FALLBACK_CACHED",
+            "status": "FALLBACK_SIMULATED",
+            "source": "Simulated Benchmark Snapshot (Network Offline / Market Closed)",
             "info": error
         }

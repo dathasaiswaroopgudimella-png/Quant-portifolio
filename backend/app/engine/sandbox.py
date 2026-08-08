@@ -109,7 +109,7 @@ class SandboxedModelEvaluator:
             except Exception as e:
                 error_holder["err"] = str(e)
 
-        t = threading.Thread(target=_worker)
+        t = threading.Thread(target=_worker, daemon=True)
         t.start()
         t.join(timeout=timeout_seconds)
 

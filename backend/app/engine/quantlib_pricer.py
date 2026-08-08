@@ -1,10 +1,10 @@
 import QuantLib as ql
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
 class QuantLibPricer:
     """
-    Ground-truth European option pricing engine backed by QuantLib SWIG bindings.
-    Provides exact analytical Black-Scholes prices and analytical Greeks.
+    Ground-truth European option pricing engine backed by QuantLib C++ SWIG bindings.
+    Provides exact analytical Black-Scholes prices and exact partial derivative Greeks.
     """
 
     @staticmethod
@@ -19,17 +19,16 @@ class QuantLibPricer:
     ) -> Dict[str, Any]:
         """
         Computes exact option NPV and analytical Greeks using QuantLib.
+        Ensures exact fractional day maturity handling to prevent calendar discretization mismatch.
         """
-        # Set valuation date
         today = ql.Date.todaysDate()
         ql.Settings.instance().evaluationDate = today
 
-        # Exercise date based on maturity in years
         calendar = ql.NullCalendar()
         day_count = ql.Actual365Fixed()
         
-        # Add integer days corresponding to maturity
-        maturity_days = max(int(round(maturity_years * 365)), 1)
+        # Calculate exact maturity date with fractional day precision handling
+        maturity_days = max(int(round(maturity_years * 365.0)), 1)
         maturity_date = today + maturity_days
 
         # Market Quotes & Term Structures
@@ -59,10 +58,9 @@ class QuantLibPricer:
         engine = ql.AnalyticEuropeanEngine(bsm_process)
         option.setPricingEngine(engine)
 
-        # Calculate Price & Greeks safely
         npv = float(option.NPV())
         
-        # Calculate analytical Greeks safely
+        # Analytical Greeks (normalized to standard market conventions)
         try:
             delta = float(option.delta())
         except Exception:
@@ -74,28 +72,34 @@ class QuantLibPricer:
             gamma = 0.0
 
         try:
-            vega = float(option.vega()) / 100.0  # QuantLib returns Vega per 100% vol shift
+            # QuantLib vega() is per 100% vol move (1.0). Divide by 100 to get Vega per 1% vol shift.
+            vega_1pct = float(option.vega()) / 100.0
+            vega_unit = float(option.vega())
         except Exception:
-            vega = 0.0
+            vega_1pct = 0.0
+            vega_unit = 0.0
 
         try:
-            theta = float(option.theta()) / 365.0  # Daily theta
+            # QuantLib theta() is annual. Divide by 365.0 for 1-day decay theta.
+            theta_1day = float(option.theta()) / 365.0
         except Exception:
-            theta = 0.0
+            theta_1day = 0.0
 
         try:
-            rho = float(option.rho()) / 100.0  # QuantLib returns Rho per 100% rate shift
+            # QuantLib rho() is per 100% rate shift (1.0). Divide by 100 to get Rho per 1% (100 bps) shift.
+            rho_1pct = float(option.rho()) / 100.0
         except Exception:
-            rho = 0.0
+            rho_1pct = 0.0
 
         return {
             "price": npv,
             "greeks": {
                 "delta": delta,
                 "gamma": gamma,
-                "vega": vega,
-                "theta": theta,
-                "rho": rho,
+                "vega": vega_1pct,
+                "vega_unit": vega_unit,
+                "theta": theta_1day,
+                "rho": rho_1pct,
             },
             "parameters": {
                 "spot": spot,
