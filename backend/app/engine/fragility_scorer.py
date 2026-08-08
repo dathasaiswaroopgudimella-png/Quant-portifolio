@@ -13,7 +13,10 @@ class FragilityScorer:
         max_adversarial_error: float,
         breaking_params: Dict[str, Any],
         base_price: float,
-        greek_drifts: Dict[str, Any] = None
+        greek_drifts: Dict[str, Any] = None,
+        base_spot: float = 100.0,
+        base_volatility: float = 0.20,
+        base_rate: float = 0.05
     ) -> Dict[str, Any]:
         """
         Computes composite fragility index, numerical gradient risk attribution,
@@ -31,9 +34,11 @@ class FragilityScorer:
         greek_penalty = min((delta_drift * 40.0 + vega_drift * 50.0), 30.0)
 
         # Calibrated Composite Fragility Index
-        # Score = 0.25 * base_error_pct + 0.55 * adversarial_pct_err + 0.20 * greek_penalty
         raw_score = 0.25 * min(rel_base_err * 5.0, 25.0) + 0.55 * min(pct_err, 100.0) + 0.20 * greek_penalty
         fragility_score = round(min(max(raw_score, 0.0), 100.0), 1)
+
+        # Robustness Score (100 - Fragility Score)
+        robustness_score = round(100.0 - fragility_score, 1)
 
         # Classification Tiers
         if fragility_score <= 15.0:
@@ -49,21 +54,27 @@ class FragilityScorer:
             classification = "CRITICAL"
             summary = "Model suffers severe pricing breakdown or produces non-physical outputs under stress market conditions."
 
-        # Dynamic Gradient Risk Attribution
-        # Calculate actual parameter sensitivity ratio at breaking point
-        spot = breaking_params.get("spot", 100.0)
-        vol = breaking_params.get("volatility", 0.20)
-        rate = breaking_params.get("risk_free_rate", 0.05)
+        # Dynamic Gradient Risk Attribution relative to actual model base parameters
+        spot = breaking_params.get("spot", base_spot)
+        vol = breaking_params.get("volatility", base_volatility)
+        rate = breaking_params.get("risk_free_rate", base_rate)
         
-        vol_sens = abs(vol - 0.20) / 0.20
-        spot_sens = abs(spot - 100.0) / 100.0
-        rate_sens = abs(rate - 0.05) / 0.05
-        total_sens = max(vol_sens + spot_sens + rate_sens, 1e-4)
+        vol_sens = abs(vol - base_volatility) / max(base_volatility, 0.01)
+        spot_sens = abs(spot - base_spot) / max(base_spot, 0.01)
+        rate_sens = abs(rate - base_rate) / max(base_rate, 0.001)
+        total_sens = vol_sens + spot_sens + rate_sens
+
+        if total_sens > 1e-4:
+            attr_vol = round((vol_sens / total_sens) * 100.0, 1)
+            attr_spot = round((spot_sens / total_sens) * 100.0, 1)
+            attr_rate = round((rate_sens / total_sens) * 100.0, 1)
+        else:
+            attr_vol, attr_spot, attr_rate = 60.0, 25.0, 15.0
 
         risk_attribution = {
-            "volatility_regime_risk": round((vol_sens / total_sens) * 100.0, 1),
-            "spot_tail_convexity": round((spot_sens / total_sens) * 100.0, 1),
-            "interest_rate_sensitivity": round((rate_sens / total_sens) * 100.0, 1),
+            "volatility_regime_risk": attr_vol,
+            "spot_tail_convexity": attr_spot,
+            "interest_rate_sensitivity": attr_rate,
         }
 
         # Actionable Operational Boundaries & Guidance
@@ -77,6 +88,7 @@ class FragilityScorer:
 
         return {
             "fragility_score": fragility_score,
+            "robustness_score": robustness_score,
             "classification": classification,
             "summary": summary,
             "actionable_recommendation": actionable_recommendation,

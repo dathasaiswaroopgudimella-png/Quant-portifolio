@@ -122,7 +122,7 @@ export default function ValidationDetailPage() {
                   ? "bg-[#ffb95f]/10 text-[#ffb95f] border-[#ffb95f]/30"
                   : "bg-[#ff7878]/10 text-[#ff7878] border-[#ff7878]/30"
               }`}>
-                Fragility: {validation.fragility_score}/100 ({validation.classification})
+                Robustness: {(100 - (validation.fragility_score || 0)).toFixed(1)}/100 ({validation.classification} &bull; Fragility: {validation.fragility_score}%)
               </span>
             </div>
             <p className="text-xs font-mono text-[#908fa0]">

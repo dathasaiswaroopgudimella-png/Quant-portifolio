@@ -324,7 +324,7 @@ export default function DashboardPage() {
                     {latestVal ? (
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="text-[#606070]">Fragility Score</span>
+                          <span className="text-[#606070]">Robustness Score: {(100 - (latestVal.fragility_score || 0)).toFixed(0)}/100</span>
                           <Badge cls={latestVal.classification ?? "MODERATE"} />
                         </div>
                         <ScoreBar score={latestVal.fragility_score || 0} />
