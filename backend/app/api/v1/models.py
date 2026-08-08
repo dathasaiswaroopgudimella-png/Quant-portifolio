@@ -87,29 +87,11 @@ async def list_models(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(FinancialModel).order_by(FinancialModel.created_at.desc()))
     models = result.scalars().all()
     
-    # Auto-seed default Black-Scholes model if empty
     if not models:
-        seed_model = FinancialModel(
-            name="Standard Black-Scholes Call",
-            description="Baseline analytical European call option pricing function",
-            asset_class="Equity Options",
-            code=DEFAULT_BS_CODE
-        )
-        db.add(seed_model)
-        await db.flush()
-        extracted = AssumptionExtractor.extract_assumptions(DEFAULT_BS_CODE)
-        for a in extracted:
-            db.add(Assumption(
-                model_id=seed_model.id,
-                name=a["name"],
-                category=a["category"],
-                mathematical_form=a["mathematical_form"],
-                description=a["description"],
-                is_violated_in_stress=a["is_violated_in_stress"]
-            ))
-        await db.commit()
-        await db.refresh(seed_model)
-        models = [seed_model]
+        from app.db.seed import seed_initial_data
+        await seed_initial_data(db)
+        result = await db.execute(select(FinancialModel).order_by(FinancialModel.created_at.desc()))
+        models = result.scalars().all()
 
     return models
 

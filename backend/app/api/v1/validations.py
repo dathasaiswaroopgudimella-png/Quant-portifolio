@@ -145,6 +145,12 @@ async def create_validation_run(
 async def list_validations(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ValidationRun).order_by(ValidationRun.created_at.desc()))
     runs = result.scalars().all()
+    if not runs:
+        from app.db.seed import seed_initial_data
+        await seed_initial_data(db)
+        result = await db.execute(select(ValidationRun).order_by(ValidationRun.created_at.desc()))
+        runs = result.scalars().all()
+
     res_list = []
     for r in runs:
         item = ValidationResponse.model_validate(r)

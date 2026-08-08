@@ -35,7 +35,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 async def init_db() -> None:
-    """Initialize database tables synchronously/asynchronously without blocking."""
+    """Initialize database tables and seed initial 2 real-world quantitative option models."""
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -45,3 +45,8 @@ async def init_db() -> None:
         fallback_engine = create_async_engine(settings.SQLITE_FALLBACK_URL, echo=False, future=True)
         async with fallback_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+    # Seed initial 2 quantitative option models with full validation reports
+    from app.db.seed import seed_initial_data
+    async with AsyncSessionLocal() as session:
+        await seed_initial_data(session)
