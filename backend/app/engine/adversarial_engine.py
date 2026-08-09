@@ -165,7 +165,11 @@ class AdversarialEngine:
         try:
             u_p_v_up = user_fn(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol + h_v)
             u_p_v_dn = user_fn(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol - h_v)
-            user_vega = (u_p_v_up - u_p_v_dn) / (2.0 * h_v * 100.0)
+            # FD vega per unit vol change (Δσ=1.0) — same convention as QuantLib vega_unit.
+            # QuantLib stores vega_unit (per unit move) in greeks["vega_unit"] but exposes vega_1pct
+            # as greeks["vega"]. Use vega_unit for consistent comparison.
+            user_vega_unit = (u_p_v_up - u_p_v_dn) / (2.0 * h_v)
+            user_vega = user_vega_unit / 100.0  # convert to per-1%-vol-point (market convention)
         except Exception:
             user_vega = ql_worst["greeks"]["vega"]
 
@@ -204,7 +208,7 @@ class AdversarialEngine:
                 "popsize": 15,
                 "environment_metadata": {
                     "quantlib_version": getattr(ql, "__version__", "1.43"),
-                    "scipy_version": optimize.__name__,
+                    "scipy_version": __import__("scipy").__version__,
                     "numpy_version": np.__version__,
                     "python_version": sys.version.split()[0]
                 }
@@ -270,7 +274,7 @@ class AdversarialEngine:
                         spot=curr_spot,
                         strike=base_strike,
                         maturity=base_maturity,
-                        rate=base_rate,
+                        rate=base_rate,   # surface is Spot×Vol 2D slice at base_rate
                         volatility=curr_vol
                     ))
                 except Exception:
