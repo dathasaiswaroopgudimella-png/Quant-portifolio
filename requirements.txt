@@ -1,0 +1,14 @@
+mangum>=0.17.0
+QuantLib>=1.43
+fastapi>=0.115.0
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.20.0
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+yfinance>=0.2.40
+sympy>=1.12
+scipy>=1.13.0
+numpy>=1.26.0
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+httpx>=0.27.0

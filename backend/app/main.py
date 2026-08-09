@@ -23,10 +23,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Setup - Permissive for dev environments across 3000, 3001, 8000
+# CORS Setup — local dev + Vercel production
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):(3000|3001|8000)",
+    allow_origin_regex=r"(http://(localhost|127\.0\.0\.1):(3000|3001|8000)|https://.*\.vercel\.app|https://quant-portifolio\.vercel\.app)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
