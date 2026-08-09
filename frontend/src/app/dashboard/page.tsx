@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#c0c1ff] to-[#4edea3] flex items-center justify-center text-[#08080d] font-black text-[10px]">F</div>
                 <span className="font-bold text-xs tracking-widest text-[#e5e1e4]">FRAGMENT</span>
               </Link>
-              <div className="hidden md:flex items-center gap-1 text-[11px] font-mono">
+              <div className="hidden md:flex items-center gap-1 text-xs font-sans font-medium">
                 {[["Dashboard", "/dashboard", "#c0c1ff"], ["Editor", "/editor", "#4edea3"], ["Market", "/market", "#ffb95f"], ["Validations", "/validations", "#908fa0"]].map(([label, href, color]) => (
                   <Link key={href} href={href}
                     className="px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
@@ -193,46 +193,46 @@ export default function DashboardPage() {
               </div>
             </div>
             <Link href="/editor"
-              className="px-4 py-2 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-xs rounded-lg hover:shadow-[0_0_20px_rgba(192,193,255,0.3)] transition-all hover:scale-105">
+              className="px-4 py-2 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-xs rounded-lg hover:shadow-[0_0_20px_rgba(192,193,255,0.3)] transition-all hover:scale-105 font-sans">
               + New Validation
             </Link>
           </div>
         </nav>
 
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 font-sans">
 
           {/* ── Page Header ──────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex flex-wrap items-start justify-between gap-6 font-sans">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-pulse" />
-                <span className="text-[10px] font-mono text-[#4edea3] tracking-widest uppercase">Live · SR 11-7 Aligned</span>
+                <span className="text-[11px] font-sans font-semibold text-[#4edea3] tracking-widest uppercase">Live · SR 11-7 Aligned</span>
               </div>
-              <h1 className="text-3xl font-black text-[#e5e1e4] leading-tight">
+              <h1 className="text-3xl font-black text-[#e5e1e4] leading-tight font-sans">
                 Model Risk{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c0c1ff] to-[#4edea3]">
                   Governance
                 </span>
               </h1>
-              <p className="text-xs text-[#606070] font-mono mt-1">
+              <p className="text-xs text-[#908fa0] font-sans font-medium mt-1">
                 QuantLib 1.43 · SciPy Differential Evolution · AST Inspection · Three.js WebGL
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 font-sans">
               <button onClick={() => setShowSurface(!showSurface)}
-                className={`px-4 py-2 text-xs font-mono rounded-lg border transition-all ${showSurface ? "bg-[#c0c1ff]/10 border-[#c0c1ff]/30 text-[#c0c1ff]" : "bg-white/5 border-white/10 text-[#908fa0] hover:text-[#e5e1e4]"}`}>
+                className={`px-4 py-2 text-xs font-sans font-medium rounded-lg border transition-all ${showSurface ? "bg-[#c0c1ff]/10 border-[#c0c1ff]/30 text-[#c0c1ff]" : "bg-white/5 border-white/10 text-[#908fa0] hover:text-[#e5e1e4]"}`}>
                 {showSurface ? "▼ Hide 3D Surface" : "▲ Show 3D Surface"}
               </button>
               <button onClick={() => setView(view === "grid" ? "table" : "grid")}
-                className="px-4 py-2 text-xs font-mono bg-white/5 border border-white/10 text-[#908fa0] hover:text-[#e5e1e4] rounded-lg transition-all">
+                className="px-4 py-2 text-xs font-sans font-medium bg-white/5 border border-white/10 text-[#908fa0] hover:text-[#e5e1e4] rounded-lg transition-all">
                 {view === "grid" ? "⊞ Table View" : "⊟ Grid View"}
               </button>
             </div>
           </div>
 
           {/* ── Stats Row ─────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
             <StatCard label="Registered Models" value={models.length} sub="In governance inventory" color="#c0c1ff" spark={sparkData} />
             <StatCard label="Validation Runs" value={validations.length} sub="Adversarial searches run" color="#4edea3" spark={[...sparkData].reverse()} />
             <StatCard label="Robust Tier" value={robust} sub="Pass Fed boundaries" color="#4edea3" />
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── Filter Row ────────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 font-sans">
             <div className="relative flex-1 min-w-[200px] max-w-xs">
               <svg className="w-3.5 h-3.5 text-[#606070] absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input
@@ -258,14 +258,14 @@ export default function DashboardPage() {
                 placeholder="Search models..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111116] border border-[#2e2c33] pl-9 pr-4 py-2 rounded-xl text-xs text-[#e5e1e4] placeholder-[#606070] focus:outline-none focus:border-[#c0c1ff]/50 font-mono transition-colors"
+                className="w-full bg-[#111116] border border-[#2e2c33] pl-9 pr-4 py-2 rounded-xl text-xs text-[#e5e1e4] placeholder-[#606070] focus:outline-none focus:border-[#c0c1ff]/50 font-sans transition-colors"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap font-sans">
               {assetClasses.map(ac => (
                 <button key={ac} onClick={() => setAssetFilter(ac)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-mono transition-all ${assetFilter === ac ? "bg-[#c0c1ff] text-[#08080d] font-bold" : "bg-[#111116] border border-[#2e2c33] text-[#908fa0] hover:text-[#e5e1e4]"}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-sans font-medium transition-all ${assetFilter === ac ? "bg-[#c0c1ff] text-[#08080d] font-bold" : "bg-[#111116] border border-[#2e2c33] text-[#908fa0] hover:text-[#e5e1e4]"}`}>
                   {ac}
                 </button>
               ))}
@@ -274,27 +274,26 @@ export default function DashboardPage() {
 
           {/* ── Model Grid / Table ────────────────────────────────────── */}
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32 gap-4">
+            <div className="flex flex-col items-center justify-center py-32 gap-4 font-sans">
               <div className="w-10 h-10 border-2 border-[#c0c1ff]/20 border-t-[#c0c1ff] rounded-full animate-spin" />
-              <p className="text-xs font-mono text-[#606070]">Loading model inventory…</p>
+              <p className="text-xs font-sans text-[#908fa0] font-medium">Loading model inventory…</p>
             </div>
           ) : filteredModels.length === 0 ? (
-            <div className="py-32 text-center">
+            <div className="py-32 text-center font-sans">
               <div className="text-4xl mb-4">🔭</div>
-              <p className="text-sm text-[#606070] font-mono mb-6">No models match your filter.</p>
-              <Link href="/editor" className="px-6 py-2.5 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-xs rounded-xl hover:scale-105 transition-all">
+              <p className="text-sm text-[#908fa0] font-sans font-medium mb-6">No models match your filter.</p>
+              <Link href="/editor" className="px-6 py-2.5 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-xs rounded-xl hover:scale-105 transition-all font-sans">
                 Register First Model →
               </Link>
             </div>
           ) : view === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 font-sans">
               {filteredModels.map(m => {
                 const latestVal = validations.find(v => v.model_id === m.id);
                 const demoScores = [88, 91, 76, 94, 83, 89];
-                const ref = { current: null as HTMLDivElement | null };
                 return (
                   <div key={m.id}
-                    className="relative bg-[#111116] border border-[#2e2c33] rounded-2xl p-5 hover:border-[#c0c1ff]/25 transition-all duration-300 group overflow-hidden"
+                    className="relative bg-[#111116] border border-[#2e2c33] rounded-2xl p-5 hover:border-[#c0c1ff]/25 transition-all duration-300 group overflow-hidden font-sans"
                     style={{ transformStyle: "preserve-3d" }}
                     onMouseMove={e => {
                       const el = e.currentTarget;
@@ -309,12 +308,12 @@ export default function DashboardPage() {
 
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 font-sans">
                           <div className="w-2 h-2 rounded-full" style={{ background: latestVal?.classification === "ROBUST" ? "#4edea3" : latestVal ? "#ff7878" : "#606070" }} />
-                          <span className="text-[10px] font-mono text-[#606070]">{m.asset_class}</span>
+                          <span className="text-[11px] font-sans font-medium text-[#908fa0]">{m.asset_class}</span>
                         </div>
-                        <h3 className="font-bold text-sm text-[#e5e1e4] truncate">{m.name}</h3>
-                        <p className="text-[10px] text-[#606070] font-mono mt-0.5">
+                        <h3 className="font-bold text-sm text-[#e5e1e4] truncate font-sans">{m.name}</h3>
+                        <p className="text-[11px] text-[#908fa0] font-sans mt-0.5">
                           Registered {new Date(m.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -322,27 +321,27 @@ export default function DashboardPage() {
                     </div>
 
                     {latestVal ? (
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="text-[#606070]">Robustness Score: {(100 - (latestVal.fragility_score || 0)).toFixed(0)}/100</span>
+                      <div className="space-y-2 mb-4 font-sans">
+                        <div className="flex items-center justify-between text-xs font-sans font-medium">
+                          <span className="text-[#908fa0]">Robustness Score: {(100 - (latestVal.fragility_score || 0)).toFixed(0)}/100</span>
                           <Badge cls={latestVal.classification ?? "MODERATE"} />
                         </div>
                         <ScoreBar score={latestVal.fragility_score || 0} />
                       </div>
                     ) : (
-                      <div className="py-3 mb-4 border border-dashed border-[#2e2c33] rounded-xl text-center text-[10px] font-mono text-[#606070]">
+                      <div className="py-3 mb-4 border border-dashed border-[#2e2c33] rounded-xl text-center text-xs font-sans text-[#908fa0]">
                         No validation run yet
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 font-sans">
                       <Link href={`/editor?modelId=${m.id}`}
-                        className="flex-1 py-2 text-center text-[11px] font-bold font-mono bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 text-[#c0c1ff] rounded-lg hover:bg-[#c0c1ff] hover:text-[#08080d] transition-all">
+                        className="flex-1 py-2 text-center text-xs font-bold font-sans bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 text-[#c0c1ff] rounded-lg hover:bg-[#c0c1ff] hover:text-[#08080d] transition-all">
                         Validate →
                       </Link>
                       {latestVal && (
                         <Link href={`/validations/${latestVal.id}`}
-                          className="flex-1 py-2 text-center text-[11px] font-bold font-mono bg-white/5 border border-white/10 text-[#908fa0] rounded-lg hover:text-[#e5e1e4] transition-all">
+                          className="flex-1 py-2 text-center text-xs font-bold font-sans bg-white/5 border border-white/10 text-[#908fa0] rounded-lg hover:text-[#e5e1e4] transition-all">
                           Report
                         </Link>
                       )}
@@ -353,45 +352,45 @@ export default function DashboardPage() {
             </div>
           ) : (
             /* Table View */
-            <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl overflow-hidden">
+            <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl overflow-hidden font-sans">
               <div className="border-b border-[#2e2c33] px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xs font-mono font-bold text-[#606070] uppercase tracking-widest">
+                <h2 className="text-xs font-sans font-bold text-[#908fa0] uppercase tracking-widest">
                   Financial Model Inventory · {filteredModels.length} Models
                 </h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs font-mono">
+                <table className="w-full text-xs font-sans">
                   <thead>
-                    <tr className="bg-[#0d0d12] border-b border-[#2e2c33] text-[#606070] uppercase text-[10px]">
-                      <th className="py-3 px-5 text-left">Model</th>
-                      <th className="py-3 px-5 text-left">Asset Class</th>
-                      <th className="py-3 px-5 text-left">Fragility</th>
-                      <th className="py-3 px-5 text-left">Classification</th>
-                      <th className="py-3 px-5 text-left">Registered</th>
-                      <th className="py-3 px-5 text-right">Actions</th>
+                    <tr className="bg-[#0d0d12] border-b border-[#2e2c33] text-[#908fa0] uppercase text-[11px] font-sans font-semibold">
+                      <th className="py-3 px-5 text-left font-semibold">Model</th>
+                      <th className="py-3 px-5 text-left font-semibold">Asset Class</th>
+                      <th className="py-3 px-5 text-left font-semibold">Fragility</th>
+                      <th className="py-3 px-5 text-left font-semibold">Classification</th>
+                      <th className="py-3 px-5 text-left font-semibold">Registered</th>
+                      <th className="py-3 px-5 text-right font-semibold">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2e2c33]/60">
+                  <tbody className="divide-y divide-[#2e2c33]/60 font-sans">
                     {filteredModels.map(m => {
                       const v = validations.find(v => v.model_id === m.id);
                       return (
-                        <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3.5 px-5 font-bold text-[#e5e1e4]">
+                        <tr key={m.id} className="hover:bg-white/[0.02] transition-colors font-sans">
+                          <td className="py-3.5 px-5 font-bold text-[#e5e1e4] font-sans">
                             <div className="flex items-center gap-2">
                               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: v?.classification === "ROBUST" ? "#4edea3" : v ? "#ff7878" : "#606070" }} />
                               {m.name}
                             </div>
                           </td>
-                          <td className="py-3.5 px-5 text-[#908fa0]">{m.asset_class}</td>
+                          <td className="py-3.5 px-5 text-[#908fa0] font-medium">{m.asset_class}</td>
                           <td className="py-3.5 px-5 w-36">
-                            {v ? <ScoreBar score={v.fragility_score || 0} /> : <span className="text-[#606070] italic text-[10px]">Unvalidated</span>}
+                            {v ? <ScoreBar score={v.fragility_score || 0} /> : <span className="text-[#606070] italic text-xs font-sans">Unvalidated</span>}
                           </td>
                           <td className="py-3.5 px-5">
                             {v ? <Badge cls={v.classification ?? "MODERATE"} /> : "—"}
                           </td>
-                          <td className="py-3.5 px-5 text-[#606070]">{new Date(m.created_at).toLocaleDateString()}</td>
+                          <td className="py-3.5 px-5 text-[#908fa0] font-medium">{new Date(m.created_at).toLocaleDateString()}</td>
                           <td className="py-3.5 px-5 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex items-center justify-end gap-2 font-sans font-medium">
                               {v && (
                                 <Link href={`/validations/${v.id}`} className="text-[#4edea3] hover:underline">Report</Link>
                               )}
@@ -412,35 +411,35 @@ export default function DashboardPage() {
 
           {/* ── Recent Validations ───────────────────────────────────── */}
           {validations.length > 0 && (
-            <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl overflow-hidden">
+            <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl overflow-hidden font-sans">
               <div className="border-b border-[#2e2c33] px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xs font-mono font-bold text-[#606070] uppercase tracking-widest">Recent Validation Runs</h2>
-                <Link href="/validations" className="text-[10px] font-mono text-[#c0c1ff] hover:underline">View All →</Link>
+                <h2 className="text-xs font-sans font-bold text-[#908fa0] uppercase tracking-widest">Recent Validation Runs</h2>
+                <Link href="/validations" className="text-xs font-sans font-semibold text-[#c0c1ff] hover:underline">View All →</Link>
               </div>
-              <div className="divide-y divide-[#2e2c33]/40">
+              <div className="divide-y divide-[#2e2c33]/40 font-sans">
                 {validations.slice(0, 5).map(v => {
                   const model = models.find(m => m.id === v.model_id);
                   return (
-                    <div key={v.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
-                      <div className="flex items-center gap-4">
+                    <div key={v.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors group font-sans">
+                      <div className="flex items-center gap-4 font-sans">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                           style={{ background: v.classification === "ROBUST" ? "#4edea3/10" : "#ff7878/10" }}>
                           {v.classification === "ROBUST" ? "✓" : "⚠"}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-[#e5e1e4]">{model?.name ?? "Unknown Model"}</p>
-                          <p className="text-[10px] text-[#606070] font-mono">
+                          <p className="text-xs font-bold text-[#e5e1e4] font-sans">{model?.name ?? "Unknown Model"}</p>
+                          <p className="text-[11px] text-[#908fa0] font-sans font-medium">
                             {new Date(v.created_at).toLocaleString()}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 font-sans">
                         <div className="hidden sm:block w-32">
                           <ScoreBar score={v.fragility_score || 0} />
                         </div>
                         <Badge cls={v.classification ?? "MODERATE"} />
                         <Link href={`/validations/${v.id}`}
-                          className="text-[10px] font-mono text-[#c0c1ff] opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
+                          className="text-xs font-sans font-semibold text-[#c0c1ff] opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
                           View →
                         </Link>
                       </div>
@@ -452,9 +451,19 @@ export default function DashboardPage() {
           )}
 
           {/* ── Footer ─────────────────────────────────────────────── */}
-          <div className="border-t border-[#2e2c33]/40 pt-6 flex flex-wrap items-center justify-between gap-3 text-[10px] font-mono text-[#606070]">
-            <span>FRAGMENT · Adversarial Model Risk Validation Platform</span>
-            <span>QuantLib 1.43 · Next.js 14 · FastAPI · Three.js WebGL · SR 11-7 Aligned</span>
+          <div className="border-t border-[#2e2c33]/40 pt-6 flex flex-wrap items-center justify-between gap-3 text-xs font-sans text-[#908fa0]">
+            <span className="font-medium">FRAGMENT · Adversarial Model Risk Validation Platform</span>
+            <div className="flex items-center gap-4 text-[11px] font-sans">
+              <span className="font-mono">QuantLib 1.43</span>
+              <span>·</span>
+              <span>Next.js 14</span>
+              <span>·</span>
+              <span>FastAPI</span>
+              <span>·</span>
+              <span>Three.js WebGL</span>
+              <span>·</span>
+              <span className="font-mono">SR 11-7 Aligned</span>
+            </div>
           </div>
 
         </div>

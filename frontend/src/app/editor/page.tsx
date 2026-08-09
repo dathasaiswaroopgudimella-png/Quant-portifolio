@@ -257,33 +257,33 @@ function ModelEditorInner() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 bg-[#161519] p-5 rounded-2xl border border-[#2e2c33]">
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-[#161519] p-5 rounded-2xl border border-[#2e2c33] font-sans">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#c0c1ff]/10 border border-[#c0c1ff]/30 flex items-center justify-center text-[#c0c1ff]">
               <Code2 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#e5e1e4] flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-[#e5e1e4] flex items-center gap-2 font-sans">
                 Multi-Format Model Sandbox & AST Inspector
               </h1>
-              <p className="text-xs text-[#908fa0] font-mono">
+              <p className="text-xs text-[#908fa0] font-sans font-medium">
                 Code Sandbox &bull; Natural Language Synthesis &bull; File Upload &bull; Quant Presets
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 font-sans">
             <input
               type="text"
               value={modelName}
               onChange={(e) => setModelName(e.target.value)}
-              className="bg-[#0e0e10] border border-[#2e2c33] px-3.5 py-2 rounded-lg text-xs text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono w-48"
+              className="bg-[#0e0e10] border border-[#2e2c33] px-3.5 py-2 rounded-lg text-xs text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-sans w-48"
               placeholder="Model Name"
             />
             <button
               onClick={handleRunValidation}
               disabled={isLoading || isSynthesizing}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all disabled:opacity-50 shadow-lg shadow-[#c0c1ff]/20 font-mono"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all disabled:opacity-50 shadow-lg shadow-[#c0c1ff]/20 font-sans"
             >
               {isLoading ? (
                 <>
@@ -302,21 +302,21 @@ function ModelEditorInner() {
 
         {/* Status Alerts */}
         {statusMsg && (
-          <div className="p-3.5 rounded-xl bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30 flex items-center gap-2 text-xs font-mono">
+          <div className="p-3.5 rounded-xl bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30 flex items-center gap-2 text-xs font-sans font-medium">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{statusMsg}</span>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-4 rounded-xl bg-[#ff7878]/10 text-[#ff7878] border border-[#ff7878]/30 flex items-center gap-3 text-xs font-mono">
+          <div className="p-4 rounded-xl bg-[#ff7878]/10 text-[#ff7878] border border-[#ff7878]/30 flex items-center gap-3 text-xs font-sans font-medium">
             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* 4 Ingestion Mode Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-[#2e2c33] pb-3">
+        <div className="flex flex-wrap gap-2 border-b border-[#2e2c33] pb-3 font-sans">
           {[
             { id: "code", label: "Direct Python Code Sandbox", icon: Code2 },
             { id: "prompt", label: "Natural Language / Formula Prompt (OpenRouter)", icon: Sparkles },
@@ -329,7 +329,7 @@ function ModelEditorInner() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-sans font-semibold transition-all ${
                   isActive
                     ? "bg-[#c0c1ff] text-[#1000a9] shadow-md"
                     : "bg-[#161519] text-[#908fa0] border border-[#2e2c33] hover:text-[#e5e1e4] hover:border-[#464554]"
@@ -343,15 +343,15 @@ function ModelEditorInner() {
         </div>
 
         {/* Main Ingestion Workspaces */}
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid lg:grid-cols-12 gap-6 font-sans">
           
           {/* Left Main Pane (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
             
             {/* Tab 1: Code Sandbox */}
             {activeTab === "code" && (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3">
-                <div className="flex items-center justify-between text-xs font-mono text-[#908fa0] border-b border-[#2e2c33] pb-2">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-sans">
+                <div className="flex items-center justify-between text-xs font-sans text-[#908fa0] border-b border-[#2e2c33] pb-2 font-medium">
                   <span className="flex items-center gap-2 text-[#4edea3]">
                     <ShieldCheck className="w-4 h-4" /> PYTHON AST SECURITY INSPECTOR ACTIVE
                   </span>
@@ -365,7 +365,7 @@ function ModelEditorInner() {
                   spellCheck={false}
                 />
 
-                <div className="flex items-center justify-between text-[11px] font-mono text-[#908fa0]">
+                <div className="flex items-center justify-between text-[11px] font-sans text-[#908fa0] font-medium">
                   <span>Signature requirement: (S, K, T, r, sigma)</span>
                   <span>Execution limit: 5.0s hard timeout</span>
                 </div>
@@ -374,13 +374,13 @@ function ModelEditorInner() {
 
             {/* Tab 2: Prompt / Formula Synthesis */}
             {activeTab === "prompt" && (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-6 space-y-4">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-6 space-y-4 font-sans">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-[#e5e1e4] flex items-center gap-2">
+                  <h3 className="font-bold text-sm text-[#e5e1e4] flex items-center gap-2 font-sans">
                     <Sparkles className="w-4 h-4 text-[#c0c1ff]" />
                     OpenRouter Natural Language & Formula Model Synthesizer
                   </h3>
-                  <p className="text-xs text-[#908fa0]">
+                  <p className="text-xs text-[#908fa0] font-sans">
                     Describe your financial model in plain text, LaTeX formula, or trading specifications. OpenRouter AI will synthesize a complete, sandboxed Python function.
                   </p>
                 </div>
@@ -388,15 +388,15 @@ function ModelEditorInner() {
                 <textarea
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
-                  className="w-full h-[180px] bg-[#0e0e10] text-[#e5e1e4] font-mono text-xs p-4 rounded-xl border border-[#2e2c33] focus:outline-none focus:border-[#c0c1ff] resize-none leading-relaxed"
+                  className="w-full h-[180px] bg-[#0e0e10] text-[#e5e1e4] font-sans text-xs p-4 rounded-xl border border-[#2e2c33] focus:outline-none focus:border-[#c0c1ff] resize-none leading-relaxed"
                   placeholder="e.g. European call option using Black-Scholes formula with continuous dividend yield q"
                 />
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between font-sans">
                   <select
                     value={assetClass}
                     onChange={(e) => setAssetClass(e.target.value)}
-                    className="bg-[#0e0e10] border border-[#2e2c33] px-3 py-2 rounded-lg text-xs font-mono text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="bg-[#0e0e10] border border-[#2e2c33] px-3 py-2 rounded-lg text-xs font-sans text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
                   >
                     <option value="Equity Options">Equity Options</option>
                     <option value="FX Options">FX Options</option>
@@ -407,7 +407,7 @@ function ModelEditorInner() {
                   <button
                     onClick={handleSynthesizeFromPrompt}
                     disabled={isSynthesizing}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all disabled:opacity-50 shadow"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all disabled:opacity-50 shadow font-sans"
                   >
                     {isSynthesizing ? (
                       <>
@@ -427,11 +427,11 @@ function ModelEditorInner() {
 
             {/* Tab 3: File Upload */}
             {activeTab === "upload" && (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-8 text-center space-y-4">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-8 text-center space-y-4 font-sans">
                 <Upload className="w-12 h-12 text-[#c0c1ff] mx-auto opacity-80" />
                 <div>
-                  <h3 className="font-bold text-base text-[#e5e1e4]">Upload Quant Pricing Code</h3>
-                  <p className="text-xs text-[#908fa0] max-w-sm mx-auto mt-1">
+                  <h3 className="font-bold text-base text-[#e5e1e4] font-sans">Upload Quant Pricing Code</h3>
+                  <p className="text-xs text-[#908fa0] max-w-sm mx-auto mt-1 font-sans">
                     Select a Python (.py), JSON (.json), or script file containing your option valuation code.
                   </p>
                 </div>
@@ -445,7 +445,7 @@ function ModelEditorInner() {
                 />
                 <label
                   htmlFor="file-upload-input"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#c0c1ff] text-[#1000a9] font-bold text-xs cursor-pointer hover:bg-[#8083ff] transition-colors shadow"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#c0c1ff] text-[#1000a9] font-bold text-xs cursor-pointer hover:bg-[#8083ff] transition-colors shadow font-sans"
                 >
                   <Upload className="w-4 h-4" /> Select File from Device
                 </label>
@@ -454,28 +454,28 @@ function ModelEditorInner() {
 
             {/* Tab 4: Presets */}
             {activeTab === "preset" && (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3">
-                <h3 className="font-bold text-xs uppercase font-mono tracking-wider text-[#908fa0]">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-sans">
+                <h3 className="font-bold text-xs uppercase font-sans tracking-wider text-[#908fa0]">
                   Pre-Built Quantitative Models Library
                 </h3>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 font-sans">
                   {PRESET_MODELS.map((preset, i) => (
                     <div
                       key={i}
                       onClick={() => handleSelectPreset(preset)}
-                      className="p-4 rounded-xl bg-[#0e0e10] border border-[#2e2c33] hover:border-[#c0c1ff]/50 cursor-pointer transition-all flex items-center justify-between group"
+                      className="p-4 rounded-xl bg-[#0e0e10] border border-[#2e2c33] hover:border-[#c0c1ff]/50 cursor-pointer transition-all flex items-center justify-between group font-sans"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-[#e5e1e4] group-hover:text-[#c0c1ff]">
+                          <span className="font-bold text-xs text-[#e5e1e4] group-hover:text-[#c0c1ff] font-sans">
                             {preset.name}
                           </span>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161519] text-[#908fa0]">
+                          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded bg-[#161519] text-[#908fa0]">
                             {preset.asset_class}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#908fa0]">{preset.desc}</p>
+                        <p className="text-[11px] text-[#908fa0] font-sans">{preset.desc}</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-[#908fa0] group-hover:text-[#c0c1ff] group-hover:translate-x-1 transition-all" />
                     </div>
@@ -485,58 +485,58 @@ function ModelEditorInner() {
             )}
 
             {/* Parameter Adjustment Panel */}
-            <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-mono text-xs">
-              <h3 className="font-bold uppercase tracking-wider text-[#908fa0] text-[11px]">
+            <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-sans text-xs">
+              <h3 className="font-bold uppercase tracking-wider text-[#908fa0] text-[11px] font-sans">
                 Valuation Parameters & Baseline Conditions
               </h3>
 
-              <div className="grid grid-cols-5 gap-3">
+              <div className="grid grid-cols-5 gap-3 font-sans">
                 <div>
-                  <label className="text-[#908fa0] block text-[10px] mb-1">Spot (S)</label>
+                  <label className="text-[#908fa0] block text-[10px] mb-1 font-sans font-medium">Spot (S)</label>
                   <input
                     type="number"
                     value={spot}
                     onChange={(e) => setSpot(parseFloat(e.target.value))}
-                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[#908fa0] block text-[10px] mb-1">Strike (K)</label>
+                  <label className="text-[#908fa0] block text-[10px] mb-1 font-sans font-medium">Strike (K)</label>
                   <input
                     type="number"
                     value={strike}
                     onChange={(e) => setStrike(parseFloat(e.target.value))}
-                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[#908fa0] block text-[10px] mb-1">Tenor (T y)</label>
+                  <label className="text-[#908fa0] block text-[10px] mb-1 font-sans font-medium">Tenor (T y)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={maturity}
                     onChange={(e) => setMaturity(parseFloat(e.target.value))}
-                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[#908fa0] block text-[10px] mb-1">Rate (r)</label>
+                  <label className="text-[#908fa0] block text-[10px] mb-1 font-sans font-medium">Rate (r)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={rate}
                     onChange={(e) => setRate(parseFloat(e.target.value))}
-                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[#908fa0] block text-[10px] mb-1">Vol (&sigma;)</label>
+                  <label className="text-[#908fa0] block text-[10px] mb-1 font-sans font-medium">Vol (&sigma;)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={volatility}
                     onChange={(e) => setVolatility(parseFloat(e.target.value))}
-                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff]"
+                    className="w-full bg-[#0e0e10] border border-[#2e2c33] p-2 rounded-lg text-[#e5e1e4] focus:outline-none focus:border-[#c0c1ff] font-mono text-xs"
                   />
                 </div>
               </div>
@@ -545,16 +545,16 @@ function ModelEditorInner() {
           </div>
 
           {/* Right Main Pane: Live Results & Assumptions (5 cols) */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-5 space-y-4 font-sans">
             
             {/* Validation Outcome Card */}
             {validationResult ? (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-[#2e2c33] pb-3">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-4 font-sans">
+                <div className="flex items-center justify-between border-b border-[#2e2c33] pb-3 font-sans">
                   <div>
-                    <h3 className="font-bold text-sm text-[#e5e1e4] flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-[#e5e1e4] flex items-center gap-2 font-sans">
                       Fragility Index:
-                      <span className={`font-mono px-2.5 py-0.5 rounded text-xs ${
+                      <span className={`font-sans font-bold px-2.5 py-0.5 rounded text-xs ${
                         validationResult.classification === "ROBUST"
                           ? "bg-[#4edea3]/10 text-[#4edea3]"
                           : "bg-[#ff7878]/10 text-[#ff7878]"
@@ -566,59 +566,59 @@ function ModelEditorInner() {
 
                   <Link
                     href={`/validations/${validationResult.id}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all font-mono"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-xs hover:bg-[#8083ff] transition-all font-sans"
                   >
                     View Deep Report →
                   </Link>
                 </div>
 
                 {validationResult.breaking_parameters && (
-                  <div className="space-y-2 text-xs font-mono bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33]">
-                    <p className="text-[#ffb95f] font-semibold uppercase tracking-wider text-[11px]">
+                  <div className="space-y-2 text-xs font-sans bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33]">
+                    <p className="text-[#ffb95f] font-bold uppercase tracking-wider text-[11px] font-sans">
                       SciPy Worst-Case Market Regime
                     </p>
-                    <div className="grid grid-cols-2 gap-2 text-[#908fa0]">
-                      <div>Perturbed Spot: <span className="text-[#e5e1e4]">${validationResult.breaking_parameters.spot}</span></div>
-                      <div>Perturbed Vol: <span className="text-[#e5e1e4]">{(validationResult.breaking_parameters.volatility * 100).toFixed(1)}%</span></div>
-                      <div>User Model Price: <span className="text-[#e5e1e4]">${validationResult.breaking_parameters.user_price}</span></div>
-                      <div>QuantLib Truth: <span className="text-[#e5e1e4]">${validationResult.breaking_parameters.quantlib_price}</span></div>
-                      <div className="col-span-2 text-[#ff7878] font-bold pt-1.5 border-t border-[#2e2c33]">
-                        Max Divergence: ${validationResult.breaking_parameters.absolute_error} ({validationResult.breaking_parameters.percentage_error}%)
+                    <div className="grid grid-cols-2 gap-2 text-[#908fa0] font-sans">
+                      <div>Perturbed Spot: <span className="text-[#e5e1e4] font-mono">${validationResult.breaking_parameters.spot}</span></div>
+                      <div>Perturbed Vol: <span className="text-[#e5e1e4] font-mono">{(validationResult.breaking_parameters.volatility * 100).toFixed(1)}%</span></div>
+                      <div>User Model Price: <span className="text-[#e5e1e4] font-mono">${validationResult.breaking_parameters.user_price}</span></div>
+                      <div>QuantLib Truth: <span className="text-[#e5e1e4] font-mono">${validationResult.breaking_parameters.quantlib_price}</span></div>
+                      <div className="col-span-2 text-[#ff7878] font-bold pt-1.5 border-t border-[#2e2c33] font-sans">
+                        Max Divergence: <span className="font-mono">${validationResult.breaking_parameters.absolute_error} ({validationResult.breaking_parameters.percentage_error}%)</span>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-6 text-center space-y-3">
+              <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-6 text-center space-y-3 font-sans">
                 <Cpu className="w-10 h-10 text-[#c0c1ff] mx-auto opacity-80" />
-                <h3 className="font-bold text-sm text-[#e5e1e4]">No Validation Run Executed Yet</h3>
-                <p className="text-xs text-[#908fa0] max-w-xs mx-auto">
+                <h3 className="font-bold text-sm text-[#e5e1e4] font-sans">No Validation Run Executed Yet</h3>
+                <p className="text-xs text-[#908fa0] max-w-xs mx-auto font-sans">
                   Click 'Run Adversarial Validation' above to execute SciPy parameter search against QuantLib 1.43 ground truth.
                 </p>
               </div>
             )}
 
             {/* Extracted SymPy Assumptions */}
-            <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#2e2c33] pb-2">
-                <h3 className="font-bold text-xs uppercase tracking-wider font-mono text-[#e5e1e4] flex items-center gap-2">
+            <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-sans">
+              <div className="flex items-center justify-between border-b border-[#2e2c33] pb-2 font-sans">
+                <h3 className="font-bold text-xs uppercase tracking-wider font-sans text-[#e5e1e4] flex items-center gap-2">
                   <Layers className="w-4 h-4 text-[#ffb95f]" />
                   Extracted Mathematical Assumptions ({assumptions.length})
                 </h3>
               </div>
 
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 font-sans">
                 {assumptions.map((a) => (
-                  <div key={a.id} className="p-3.5 rounded-xl bg-[#0e0e10] border border-[#2e2c33] text-xs space-y-1">
-                    <div className="flex items-center justify-between font-semibold">
+                  <div key={a.id} className="p-3.5 rounded-xl bg-[#0e0e10] border border-[#2e2c33] text-xs space-y-1 font-sans">
+                    <div className="flex items-center justify-between font-semibold font-sans">
                       <span className="text-[#c0c1ff]">{a.name}</span>
-                      <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#161519] text-[#908fa0]">
+                      <span className="font-sans font-medium text-[10px] px-2 py-0.5 rounded bg-[#161519] text-[#908fa0]">
                         {a.category}
                       </span>
                     </div>
                     <p className="font-mono text-[11px] text-[#4edea3]">{a.mathematical_form}</p>
-                    <p className="text-[#908fa0] text-[11px] leading-snug">{a.description}</p>
+                    <p className="text-[#908fa0] text-[11px] leading-snug font-sans">{a.description}</p>
                   </div>
                 ))}
               </div>
@@ -634,7 +634,7 @@ function ModelEditorInner() {
 
 export default function ModelEditorPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-[#c0c1ff] font-mono">Loading editor…</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-[#c0c1ff] font-sans text-xs">Loading editor…</div>}>
       <ModelEditorInner />
     </Suspense>
   );

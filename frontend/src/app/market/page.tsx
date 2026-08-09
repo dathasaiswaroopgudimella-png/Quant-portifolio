@@ -100,12 +100,12 @@ export default function MarketMonitorPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <ActivityIcon />
-              <h1 className="text-2xl font-bold tracking-tight">Live Market Monitor</h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/20 ml-1">
+              <h1 className="text-2xl font-bold tracking-tight font-sans">Live Market Monitor</h1>
+              <span className="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/20 ml-1">
                 Yahoo Finance
               </span>
             </div>
-            <p className="text-sm text-[#908fa0] font-mono">
+            <p className="text-sm text-[#908fa0] font-sans font-medium">
               21-Day Rolling Historical Volatility · US 10Y Risk-Free Rate · Real-Time Spot Pricing
             </p>
           </div>
@@ -113,7 +113,7 @@ export default function MarketMonitorPage() {
           <button
             onClick={() => loadQuote(selectedTicker)}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1e1d21] border border-[#2e2c33] text-sm font-mono text-[#c7c4d7] hover:bg-[#2a2831] hover:border-[#c0c1ff]/40 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1e1d21] border border-[#2e2c33] text-sm font-sans font-semibold text-[#c7c4d7] hover:bg-[#2a2831] hover:border-[#c0c1ff]/40 transition-all disabled:opacity-50"
           >
             <RefreshIcon spin={isLoading} />
             {isLoading ? "Fetching..." : "Refresh Data"}
@@ -121,12 +121,12 @@ export default function MarketMonitorPage() {
         </div>
 
         {/* Ticker Tabs */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 font-sans">
           {TICKERS.map((sym) => (
             <button
               key={sym}
               onClick={() => setSelectedTicker(sym)}
-              className={`px-5 py-2 rounded-lg font-mono text-sm font-semibold transition-all ${
+              className={`px-5 py-2 rounded-lg font-sans text-sm font-semibold transition-all ${
                 selectedTicker === sym
                   ? "bg-[#c0c1ff] text-[#1000a9] shadow-lg shadow-[#c0c1ff]/20"
                   : "bg-[#161519] text-[#c7c4d7] border border-[#2e2c33] hover:border-[#c0c1ff]/40 hover:text-[#e5e1e4]"
@@ -139,13 +139,13 @@ export default function MarketMonitorPage() {
 
         {/* Error State */}
         {error && (
-          <div className="flex items-start gap-3 p-5 rounded-xl bg-[#ff7878]/8 border border-[#ff7878]/25 text-[#ff7878]">
+          <div className="flex items-start gap-3 p-5 rounded-xl bg-[#ff7878]/8 border border-[#ff7878]/25 text-[#ff7878] font-sans">
             <AlertIcon />
             <div>
-              <p className="font-semibold text-sm">Failed to load market data</p>
-              <p className="text-xs mt-1 text-[#ff7878]/80">{error}</p>
-              <p className="text-xs mt-2 font-mono text-[#908fa0]">
-                Make sure the backend server is running: <code className="text-[#c0c1ff]">cd backend && uvicorn app.main:app --reload</code>
+              <p className="font-semibold text-sm font-sans">Failed to load market data</p>
+              <p className="text-xs mt-1 text-[#ff7878]/80 font-sans">{error}</p>
+              <p className="text-xs mt-2 font-sans text-[#908fa0]">
+                Make sure the backend server is running: <code className="text-[#c0c1ff] font-mono">cd backend && uvicorn app.main:app --reload</code>
               </p>
             </div>
           </div>
@@ -153,9 +153,9 @@ export default function MarketMonitorPage() {
 
         {/* Loading State */}
         {isLoading && !error && (
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-5 font-sans">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-[#161519] border border-[#2e2c33] rounded-xl p-5 h-32 animate-pulse">
+              <div key={i} className="bg-[#161519] border border-[#2e2c33] rounded-xl p-5 h-32 animate-pulse font-sans">
                 <div className="h-2 bg-[#2e2c33] rounded mb-3 w-24" />
                 <div className="h-8 bg-[#2e2c33] rounded mb-2 w-32" />
                 <div className="h-2 bg-[#2e2c33] rounded w-20" />
@@ -168,14 +168,14 @@ export default function MarketMonitorPage() {
         {quote && !isLoading && (
           <>
             {/* Hero Row */}
-            <div className="grid md:grid-cols-3 gap-5">
+            <div className="grid md:grid-cols-3 gap-5 font-sans">
               <StatCard
                 label={`${quote.ticker} Live Spot Price`}
                 value={`$${quote.spot_price.toFixed(2)}`}
                 sub="Real-time via Yahoo Finance"
                 accent="#e5e1e4"
                 extra={
-                  <div className="flex items-center gap-1 text-xs text-[#4edea3] mt-1">
+                  <div className="flex items-center gap-1 text-xs text-[#4edea3] mt-1 font-sans font-medium">
                     <TrendingUpIcon />
                     <span>Live Quote · {lastUpdated?.toLocaleTimeString()}</span>
                   </div>
@@ -187,9 +187,9 @@ export default function MarketMonitorPage() {
                 sub={`Annualized std deviation of log returns`}
                 accent={volColor}
                 extra={
-                  <div>
+                  <div className="font-sans">
                     <VolatilityBar value={quote.historical_volatility_21d} />
-                    <span className="text-[10px] font-mono mt-1 inline-block" style={{ color: volColor }}>
+                    <span className="text-[11px] font-sans font-semibold mt-1 inline-block" style={{ color: volColor }}>
                       {volLabel} VOLATILITY REGIME
                     </span>
                   </div>
@@ -201,7 +201,7 @@ export default function MarketMonitorPage() {
                 sub="US 10-Year Treasury Yield"
                 accent="#c0c1ff"
                 extra={
-                  <p className="text-[10px] font-mono text-[#908fa0] mt-1">
+                  <p className="text-[11px] font-sans text-[#908fa0] mt-1 font-medium">
                     Used as r in BSM: e<sup>-rT</sup> discounting
                   </p>
                 }
@@ -209,41 +209,41 @@ export default function MarketMonitorPage() {
             </div>
 
             {/* Option Pricing Inputs Preview */}
-            <div className="bg-[#161519] border border-[#2e2c33] rounded-xl p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="bg-[#161519] border border-[#2e2c33] rounded-xl p-6 font-sans">
+              <div className="flex items-center justify-between mb-5 font-sans">
                 <div>
-                  <h2 className="text-base font-bold text-[#e5e1e4]">Live BSM Pricing Inputs — {quote.ticker}</h2>
-                  <p className="text-xs text-[#908fa0] mt-0.5 font-mono">
+                  <h2 className="text-base font-bold text-[#e5e1e4] font-sans">Live BSM Pricing Inputs — {quote.ticker}</h2>
+                  <p className="text-xs text-[#908fa0] mt-0.5 font-sans font-medium">
                     These parameters auto-populate the Model Sandbox Editor for adversarial validation
                   </p>
                 </div>
                 <a
                   href="/editor"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-sm hover:bg-[#8083ff] transition-colors shadow-lg shadow-[#c0c1ff]/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#c0c1ff] text-[#1000a9] font-bold text-sm hover:bg-[#8083ff] transition-colors shadow-lg shadow-[#c0c1ff]/20 font-sans"
                 >
                   Validate in Editor →
                 </a>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-sans text-sm">
                 {[
                   { label: "Spot (S)", value: `$${quote.spot_price.toFixed(2)}`, desc: "Current market price" },
                   { label: "Volatility (σ)", value: `${(quote.historical_volatility_21d * 100).toFixed(2)}%`, desc: "21D rolling HV" },
                   { label: "Risk-Free (r)", value: `${(quote.risk_free_rate * 100).toFixed(2)}%`, desc: "US 10Y Treasury" },
                   { label: "Strike (K)", value: `$${(quote.spot_price).toFixed(2)}`, desc: "ATM suggestion" },
                 ].map(item => (
-                  <div key={item.label} className="bg-[#0e0e10] border border-[#2e2c33] rounded-lg p-3 space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-[#908fa0]">{item.label}</p>
-                    <p className="text-lg font-bold text-[#c0c1ff]">{item.value}</p>
-                    <p className="text-[10px] text-[#908fa0]">{item.desc}</p>
+                  <div key={item.label} className="bg-[#0e0e10] border border-[#2e2c33] rounded-lg p-3 space-y-1 font-sans">
+                    <p className="text-[10px] uppercase tracking-wider text-[#908fa0] font-sans font-medium">{item.label}</p>
+                    <p className="text-lg font-bold text-[#c0c1ff] font-mono">{item.value}</p>
+                    <p className="text-[11px] text-[#908fa0] font-sans">{item.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Volatility Regime Explanation */}
-            <div className="bg-[#161519] border border-[#2e2c33] rounded-xl p-6">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[#908fa0] mb-4 font-mono">
+            <div className="bg-[#161519] border border-[#2e2c33] rounded-xl p-6 font-sans">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[#908fa0] mb-4 font-sans">
                 Why Volatility Matters for Adversarial Testing
               </h2>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
