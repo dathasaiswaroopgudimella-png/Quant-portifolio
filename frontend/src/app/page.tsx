@@ -62,28 +62,45 @@ function TypeWriter({ words }: { words: string[] }) {
   );
 }
 
-/* ─── 3D Perspective Card ────────────────────────────────────────────── */
+/* ─── 3D Perspective Card with Spotlight Tracking ────────────────────── */
 function Card3D({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [spotlight, setSpotlight] = useState({ x: 50, y: 50, opacity: 0 });
+
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    ref.current.style.transform = `perspective(900px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) scale3d(1.02,1.02,1.02)`;
+    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+    const rotX = ((e.clientY - rect.top) / rect.height - 0.5) * -14;
+    const rotY = ((e.clientX - rect.left) / rect.width - 0.5) * 16;
+    
+    ref.current.style.transform = `perspective(1000px) rotateY(${rotY}deg) rotateX(${rotX}deg) translateZ(8px) scale3d(1.02,1.02,1.02)`;
+    setSpotlight({ x: xPct, y: yPct, opacity: 1 });
   };
+
   const onMouseLeave = () => {
     if (!ref.current) return;
-    ref.current.style.transform = "perspective(900px) rotateY(0deg) rotateX(0deg) scale3d(1,1,1)";
+    ref.current.style.transform = "perspective(1000px) rotateY(0deg) rotateX(0deg) translateZ(0px) scale3d(1,1,1)";
+    setSpotlight(s => ({ ...s, opacity: 0 }));
   };
+
   return (
     <div
       ref={ref}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
-      className={`transition-transform duration-200 ease-out ${className}`}
+      className={`relative transition-all duration-200 ease-out ${className}`}
       style={{ transformStyle: "preserve-3d", willChange: "transform" }}
     >
+      {/* Dynamic Cursor Spotlight Layer */}
+      <div
+        className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 z-20"
+        style={{
+          opacity: spotlight.opacity,
+          background: `radial-gradient(400px circle at ${spotlight.x}% ${spotlight.y}%, rgba(192, 193, 255, 0.15), transparent 80%)`,
+        }}
+      />
       {children}
     </div>
   );
@@ -438,10 +455,10 @@ export default function LandingPage() {
       <section className="py-24 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#c0c1ff]/[0.02] to-transparent" />
         <div className="max-w-5xl mx-auto relative">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 font-sans">
             <p className="text-[11px] font-mono text-[#4edea3] tracking-widest mb-3">FOUR WAYS TO SUBMIT</p>
             <h2 className="text-4xl font-black text-[#e5e1e4] mb-4">Any Model. Any Format.</h2>
-            <p className="text-[#908fa0] text-sm max-w-lg mx-auto">
+            <p className="text-[#908fa0] text-sm max-w-lg mx-auto leading-relaxed">
               FRAGMENT accepts code in four ways so no model ever gets rejected at the door.
             </p>
           </div>
@@ -451,16 +468,16 @@ export default function LandingPage() {
               { icon: "💻", label: "Code Editor", desc: "Paste Python directly into the syntax-highlighted editor with live validation.", color: "#c0c1ff" },
               { icon: "🤖", label: "AI Synthesis", desc: "Describe your model in plain English — OpenRouter GPT synthesizes the Python for you.", color: "#4edea3" },
               { icon: "📤", label: "File Upload", desc: "Upload .py or .txt files. Multi-format parsing handles any code style.", color: "#ffb95f" },
-              { icon: "📚", label: "8 Presets", desc: "BSM, Heston, Garman-Kohlhagen, Bachelier, and more — one-click load.", color: "#ff7878" },
+              { icon: "📚", label: "Quant Presets", desc: "Black-Scholes, Garman-Kohlhagen FX, European Options — one-click load.", color: "#ff7878" },
             ].map((m, i) => (
               <Card3D key={i}>
-                <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl p-5 text-center hover:border-opacity-60 transition-all duration-300 h-full group relative overflow-hidden"
+                <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl p-5 text-center hover:border-opacity-60 transition-all duration-300 h-full group relative overflow-hidden font-sans"
                   style={{ "--hover-color": m.color } as React.CSSProperties}>
                   <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ background: `linear-gradient(90deg, transparent, ${m.color}50, transparent)` }} />
                   <div className="text-3xl mb-3">{m.icon}</div>
                   <div className="text-xs font-bold text-[#e5e1e4] mb-2">{m.label}</div>
-                  <div className="text-[11px] text-[#908fa0] leading-relaxed">{m.desc}</div>
+                  <div className="text-[11px] text-[#908fa0] leading-relaxed font-sans">{m.desc}</div>
                 </div>
               </Card3D>
             ))}
@@ -475,7 +492,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────────────── */}
-      <section className="py-32 px-6 relative overflow-hidden">
+      <section className="py-32 px-6 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-gradient-to-r from-[#c0c1ff]/[0.04] via-transparent to-[#4edea3]/[0.04]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#c0c1ff]/[0.03] rounded-full blur-3xl" />
 
@@ -488,7 +505,7 @@ export default function LandingPage() {
               Break It First.
             </span>
           </h2>
-          <p className="text-[#908fa0] text-base mb-12 max-w-xl mx-auto leading-relaxed">
+          <p className="text-[#908fa0] text-base mb-12 max-w-xl mx-auto leading-relaxed font-sans">
             FRAGMENT finds where your model breaks before risk management does. Adversarial search, not unit tests.
           </p>
 
@@ -507,14 +524,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#2e2c33]/50 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] font-mono text-[#606070]">
+      <footer className="border-t border-[#2e2c33]/50 py-10 px-6 font-sans">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#606070]">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#c0c1ff] to-[#4edea3] flex items-center justify-center text-[#08080d] font-black text-[9px]">F</div>
-            <span>FRAGMENT — Adversarial Model Risk Validation Platform</span>
+            <span className="font-medium text-[#908fa0]">FRAGMENT — Adversarial Model Risk Validation Platform</span>
           </div>
-          <div className="flex items-center gap-6">
-            <span>QuantLib 1.43</span>
+          <div className="flex items-center gap-4 text-[11px] text-[#908fa0]">
+            <span className="font-mono">QuantLib 1.43</span>
             <span>·</span>
             <span>Next.js 14</span>
             <span>·</span>
@@ -522,7 +539,7 @@ export default function LandingPage() {
             <span>·</span>
             <span>Three.js WebGL</span>
             <span>·</span>
-            <span>SR 11-7 Aligned</span>
+            <span className="font-mono">SR 11-7 Aligned</span>
           </div>
         </div>
       </footer>

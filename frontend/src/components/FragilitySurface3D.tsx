@@ -112,14 +112,36 @@ export default function FragilitySurface3D({
     // 4. Material & Mesh
     const material = new THREE.MeshStandardMaterial({
       vertexColors: true,
-      roughness: 0.35,
-      metalness: 0.2,
+      roughness: 0.25,
+      metalness: 0.35,
       wireframe: wireframe,
       side: THREE.DoubleSide,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
+
+    // 4b. Peak Adversarial Risk Spheres (Pulsing 3D Markers at local error maxima)
+    const peakGroup = new THREE.Group();
+    for (let r = 0; r < gridY; r++) {
+      for (let c = 0; c < gridX; c++) {
+        const val = matrix[r][c];
+        if (val / maxVal > 0.70) {
+          const sphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
+          const sphereMat = new THREE.MeshBasicMaterial({
+            color: 0xff4d4d,
+            wireframe: true,
+          });
+          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          const xPos = -8 + (c / (gridX - 1)) * 16;
+          const zPos = -8 + (r / (gridY - 1)) * 16;
+          const yPos = (val / maxVal) * 6.5 + 0.3;
+          sphere.position.set(xPos, yPos, zPos);
+          peakGroup.add(sphere);
+        }
+      }
+    }
+    mesh.add(peakGroup);
 
     // 5. Grid Helper & Axis Labels Visuals
     const gridHelper = new THREE.GridHelper(20, 10, 0x2e2c33, 0x1f1e24);

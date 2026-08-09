@@ -23,54 +23,77 @@ export default function HeroScene3D() {
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
 
-    // 1. Particle Field
-    const PARTICLE_COUNT = 1800;
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(PARTICLE_COUNT * 3);
-    const pCol = new Float32Array(PARTICLE_COUNT * 3);
-    const palette = [
-      new THREE.Color(0xc0c1ff),
-      new THREE.Color(0x4edea3),
-      new THREE.Color(0xffb95f),
-      new THREE.Color(0xff7878),
-    ];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 110;
-      pPos[i * 3 + 1] = (Math.random() - 0.5) * 75;
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 90;
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      pCol[i * 3] = c.r; pCol[i * 3 + 1] = c.g; pCol[i * 3 + 2] = c.b;
-    }
-    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    pGeo.setAttribute("color", new THREE.BufferAttribute(pCol, 3));
-    const pMat = new THREE.PointsMaterial({ size: 0.16, vertexColors: true, transparent: true, opacity: 0.75, sizeAttenuation: true });
-    const particles = new THREE.Points(pGeo, pMat);
-    scene.add(particles);
+    // 1. Quantitative Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
+    const PATH_COUNT = 14;
+    const STEPS_PER_PATH = 40;
+    const pathGroup = new THREE.Group();
+    const pathCurves: THREE.Line[] = [];
 
-    // 2. Animated Deforming Wave Surface
-    const GRID = 40;
-    const surfGeo = new THREE.PlaneGeometry(36, 28, GRID, GRID);
+    for (let p = 0; p < PATH_COUNT; p++) {
+      const points: THREE.Vector3[] = [];
+      let S = 100.0;
+      const mu = 0.05;
+      const sigma = 0.15 + (p % 4) * 0.05;
+      const dt = 1.0 / STEPS_PER_PATH;
+
+      const startX = -18;
+      const startZ = (p - PATH_COUNT / 2) * 2.2;
+
+      for (let step = 0; step <= STEPS_PER_PATH; step++) {
+        const x = startX + (step / STEPS_PER_PATH) * 36;
+        if (step > 0) {
+          const Z = (Math.random() * 2 - 1) + (Math.random() * 2 - 1); // Approx Gaussian
+          S = S * Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * Z);
+        }
+        const y = ((S - 100.0) / 100.0) * 16.0;
+        const z = startZ + Math.sin(step * 0.15 + p) * 0.8;
+        points.push(new THREE.Vector3(x, y, z));
+      }
+
+      const pathGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const c = palette[p % palette.length];
+      const pathMat = new THREE.LineBasicMaterial({
+        color: c,
+        transparent: true,
+        opacity: 0.55 + (p % 3) * 0.15,
+        linewidth: 1.5,
+      });
+      const line = new THREE.Line(pathGeo, pathMat);
+      pathGroup.add(line);
+      pathCurves.push(line);
+    }
+    scene.add(pathGroup);
+
+    // 2. Animated Volatility Surface Mesh (Quant Surface)
+    const GRID = 32;
+    const surfGeo = new THREE.PlaneGeometry(38, 28, GRID, GRID);
     surfGeo.rotateX(-Math.PI / 2);
     const surfColors = new Float32Array(surfGeo.attributes.position.count * 3);
     surfGeo.setAttribute("color", new THREE.BufferAttribute(surfColors, 3));
     surfGeo.computeVertexNormals();
-    const surfMat = new THREE.MeshStandardMaterial({ vertexColors: true, wireframe: true, transparent: true, opacity: 0.30 });
+    const surfMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide
+    });
     const surface = new THREE.Mesh(surfGeo, surfMat);
-    surface.position.set(0, -7, -4);
+    surface.position.set(0, -6, -3);
     scene.add(surface);
 
-    // 3. Floating 3D Geometric Nodes
+    // 3. Floating Strike & Payoff Node Markers
     const nodeGroup = new THREE.Group();
     const nodePositions: [number, number, number][] = [
-      [-10, 4, -2], [10, 5, -4], [-6, -3, 3], [7, -4, 2],
-      [0, 7, -6], [-13, -1, -3], [13, 1, 1], [3, -7, -3],
+      [-12, 5, -2], [12, 6, -4], [-8, -2, 3], [9, -3, 2],
+      [0, 8, -5], [-14, 0, -3], [14, 2, 1], [4, -6, -2],
     ];
     nodePositions.forEach(([x, y, z], i) => {
-      const geo = new THREE.IcosahedronGeometry(0.55 + (i % 3) * 0.15, 1);
+      const geo = new THREE.OctahedronGeometry(0.55 + (i % 3) * 0.15, 0);
       const mat = new THREE.MeshStandardMaterial({
         color: palette[i % palette.length],
         emissive: palette[i % palette.length],
-        emissiveIntensity: 0.45,
+        emissiveIntensity: 0.6,
         wireframe: i % 2 === 0,
         transparent: true,
         opacity: 0.85,
@@ -81,7 +104,7 @@ export default function HeroScene3D() {
     });
     scene.add(nodeGroup);
 
-    // 4. Edge Lines Between Nodes
+    // 4. Connecting Risk Edges
     const linePts: THREE.Vector3[] = [];
     [[0,1],[1,4],[2,3],[0,5],[3,6],[4,7],[2,7],[5,2]].forEach(([a, b]) => {
       linePts.push(
@@ -90,14 +113,14 @@ export default function HeroScene3D() {
       );
     });
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
-    scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xc0c1ff, transparent: true, opacity: 0.18 })));
+    scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xc0c1ff, transparent: true, opacity: 0.22 })));
 
     // 5. Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dLight = new THREE.DirectionalLight(0xc0c1ff, 1.4);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const dLight = new THREE.DirectionalLight(0xc0c1ff, 1.5);
     dLight.position.set(10, 20, 10);
     scene.add(dLight);
-    const pLight = new THREE.PointLight(0x4edea3, 2, 60);
+    const pLight = new THREE.PointLight(0x4edea3, 2.2, 60);
     pLight.position.set(-10, 5, 5);
     scene.add(pLight);
 
@@ -109,7 +132,7 @@ export default function HeroScene3D() {
     };
     window.addEventListener("mousemove", onMM, { passive: true });
 
-    // 7. Animation Loop with Clock to prevent time overflow / drift crash
+    // 7. Animation Loop with Clock
     const clock = new THREE.Clock();
     let reqId: number;
     let isMounted = true;
@@ -121,22 +144,21 @@ export default function HeroScene3D() {
       const elapsedTime = clock.getElapsedTime();
       const t = elapsedTime * 0.4;
 
-      particles.rotation.y = t * 0.12;
-      particles.rotation.x = t * 0.04;
+      pathGroup.rotation.y = Math.sin(t * 0.3) * 0.12;
 
-      // Update wave surface vertices safely
+      // Update volatility surface vertices
       const sp = surfGeo.attributes.position;
       const sc = surfGeo.attributes.color as THREE.BufferAttribute;
       if (sp && sc) {
         for (let i = 0; i < sp.count; i++) {
           const x = sp.getX(i);
           const z = sp.getZ(i);
-          const y = Math.sin(x * 0.22 + t * 1.5) * Math.cos(z * 0.22 + t * 1.2) * 2.0
-                  + Math.sin(x * 0.11 + z * 0.15 + t * 2.0) * 1.2;
+          const y = Math.sin(x * 0.2 + t * 1.6) * Math.cos(z * 0.2 + t * 1.3) * 2.2
+                  + Math.sin(x * 0.1 + z * 0.12 + t * 2.2) * 1.4;
           sp.setY(i, y);
-          const ratio = Math.max(0, Math.min(1, (y + 3.2) / 6.4));
+          const ratio = Math.max(0, Math.min(1, (y + 3.6) / 7.2));
           const c = new THREE.Color();
-          c.setHSL(0.62 - ratio * 0.45, 0.9, 0.45 + ratio * 0.25);
+          c.setHSL(0.62 - ratio * 0.48, 0.9, 0.45 + ratio * 0.25);
           sc.setXYZ(i, c.r, c.g, c.b);
         }
         sp.needsUpdate = true;
@@ -144,11 +166,11 @@ export default function HeroScene3D() {
         surfGeo.computeVertexNormals();
       }
 
-      // Rotate nodes safely
+      // Rotate strike nodes
       nodeGroup.children.forEach((node, i) => {
-        node.rotation.x = t * (0.4 + i * 0.1);
-        node.rotation.y = t * (0.3 + i * 0.08);
-        (node as THREE.Mesh).position.y = nodePositions[i][1] + Math.sin(t * 2.0 + i * 0.8) * 0.4;
+        node.rotation.x = t * (0.5 + i * 0.1);
+        node.rotation.y = t * (0.4 + i * 0.08);
+        (node as THREE.Mesh).position.y = nodePositions[i][1] + Math.sin(t * 2.2 + i * 0.8) * 0.45;
       });
 
       // Smooth camera parallax
@@ -183,9 +205,7 @@ export default function HeroScene3D() {
       window.removeEventListener("resize", onResize);
       try {
         renderer.dispose();
-        pGeo.dispose();
         surfGeo.dispose();
-        pMat.dispose();
         surfMat.dispose();
         lineGeo.dispose();
       } catch (e) {
