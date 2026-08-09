@@ -23,6 +23,14 @@ export default function HeroScene3D() {
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
 
+    // Color Palette
+    const palette = [
+      new THREE.Color(0xc0c1ff),
+      new THREE.Color(0x4edea3),
+      new THREE.Color(0xffb95f),
+      new THREE.Color(0xff7878),
+    ];
+
     // 1. Quantitative Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
     const PATH_COUNT = 14;
     const STEPS_PER_PATH = 40;
