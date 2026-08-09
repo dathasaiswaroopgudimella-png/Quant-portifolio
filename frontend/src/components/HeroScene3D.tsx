@@ -16,12 +16,29 @@ export default function HeroScene3D() {
     const camera = new THREE.PerspectiveCamera(60, Math.max(W, 1) / Math.max(H, 1), 0.1, 1000);
     camera.position.set(0, 0, 28);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x08080d, 0); // Transparent over dark space background
+
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
+
+    // Context loss handler to prevent white screens
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.warn("[HeroScene3D] WebGL context lost. Recovering...");
+    };
+    const handleContextRestored = () => {
+      console.info("[HeroScene3D] WebGL context restored.");
+    };
+    const canvasEl = renderer.domElement;
+    canvasEl.addEventListener("webglcontextlost", handleContextLost, false);
+    canvasEl.addEventListener("webglcontextrestored", handleContextRestored, false);
 
     // Color Palette
     const palette = [
@@ -30,6 +47,9 @@ export default function HeroScene3D() {
       new THREE.Color(0xffb95f),
       new THREE.Color(0xff7878),
     ];
+
+    // Reusable single Color object for animation loop (Zero GC allocations per frame)
+    const tempColor = new THREE.Color();
 
     // 1. Quantitative Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
     const PATH_COUNT = 14;
@@ -154,7 +174,7 @@ export default function HeroScene3D() {
 
       pathGroup.rotation.y = Math.sin(t * 0.3) * 0.12;
 
-      // Update volatility surface vertices
+      // Update volatility surface vertices efficiently
       const sp = surfGeo.attributes.position;
       const sc = surfGeo.attributes.color as THREE.BufferAttribute;
       if (sp && sc) {
@@ -165,13 +185,12 @@ export default function HeroScene3D() {
                   + Math.sin(x * 0.1 + z * 0.12 + t * 2.2) * 1.4;
           sp.setY(i, y);
           const ratio = Math.max(0, Math.min(1, (y + 3.6) / 7.2));
-          const c = new THREE.Color();
-          c.setHSL(0.62 - ratio * 0.48, 0.9, 0.45 + ratio * 0.25);
-          sc.setXYZ(i, c.r, c.g, c.b);
+          // Reuse tempColor to prevent GC pauses
+          tempColor.setHSL(0.62 - ratio * 0.48, 0.9, 0.45 + ratio * 0.25);
+          sc.setXYZ(i, tempColor.r, tempColor.g, tempColor.b);
         }
         sp.needsUpdate = true;
         sc.needsUpdate = true;
-        surfGeo.computeVertexNormals();
       }
 
       // Rotate strike nodes
@@ -181,9 +200,9 @@ export default function HeroScene3D() {
         (node as THREE.Mesh).position.y = nodePositions[i][1] + Math.sin(t * 2.2 + i * 0.8) * 0.45;
       });
 
-      // Smooth camera parallax
-      const targetCamX = (mouseX || 0) * 3;
-      const targetCamY = -(mouseY || 0) * 2;
+      // Bounded camera parallax
+      const targetCamX = (mouseX || 0) * 2.5;
+      const targetCamY = -(mouseY || 0) * 1.8;
       camera.position.x += (targetCamX - camera.position.x) * 0.04;
       camera.position.y += (targetCamY - camera.position.y) * 0.04;
       camera.lookAt(0, 0, 0);
@@ -191,7 +210,7 @@ export default function HeroScene3D() {
       try {
         renderer.render(scene, camera);
       } catch (err) {
-        console.warn("[HeroScene3D] WebGL render frame skipped:", err);
+        // Skip frame on transient WebGL context loss
       }
     };
     animate();
@@ -211,6 +230,8 @@ export default function HeroScene3D() {
       cancelAnimationFrame(reqId);
       window.removeEventListener("mousemove", onMM);
       window.removeEventListener("resize", onResize);
+      canvasEl.removeEventListener("webglcontextlost", handleContextLost);
+      canvasEl.removeEventListener("webglcontextrestored", handleContextRestored);
       try {
         renderer.dispose();
         surfGeo.dispose();
@@ -222,5 +243,11 @@ export default function HeroScene3D() {
     };
   }, []);
 
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }} />;
+  return (
+    <div
+      ref={mountRef}
+      className="absolute inset-0 w-full h-full bg-[#08080d]"
+      style={{ pointerEvents: "none" }}
+    />
+  );
 }

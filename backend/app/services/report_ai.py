@@ -25,7 +25,12 @@ class OpenRouterReportService:
         if not api_key:
             return OpenRouterReportService._generate_fallback_synthetic_model(prompt, asset_class)
 
-        model_to_use = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+        candidate_models = [
+            os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
+            "meta-llama/llama-3.1-70b-instruct",
+            "openai/gpt-4o-mini",
+            "google/gemini-flash-1.5"
+        ]
         system_prompt = (
             "You are a Quantitative Software Engineer. Convert natural language descriptions, formulas, "
             "or mathematical requirements into executable Python functions for option pricing. "
@@ -48,42 +53,44 @@ class OpenRouterReportService:
         }}
         """
 
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://fragment.quant",
-                        "X-Title": "FRAGMENT Model Synthesizer"
-                    },
-                    json={
-                        "model": model_to_use,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_prompt}
-                        ],
-                        "max_tokens": 700,
-                        "temperature": 0.2
-                    }
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    raw_text = data["choices"][0]["message"]["content"]
-                    # Extract JSON payload
-                    match = re.search(r"\{.*\}", raw_text, re.DOTALL)
-                    if match:
-                        parsed = json.loads(match.group(0))
-                        if "code" in parsed and "def " in parsed["code"]:
-                            return {
-                                "name": parsed.get("name", "AI Synthesized Option Model"),
-                                "description": parsed.get("description", f"Generated from prompt: '{prompt}'"),
-                                "asset_class": asset_class,
-                                "code": parsed["code"]
-                            }
-        except Exception as e:
-            print(f"[OpenRouterSynthesizer] API notice: {e}")
+        for model_to_use in candidate_models:
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    response = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {api_key}",
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "https://fragment.quant",
+                            "X-Title": "FRAGMENT Model Synthesizer"
+                        },
+                        json={
+                            "model": model_to_use,
+                            "messages": [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_prompt}
+                            ],
+                            "max_tokens": 700,
+                            "temperature": 0.2
+                        }
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        raw_text = data["choices"][0]["message"]["content"]
+                        # Extract JSON payload
+                        match = re.search(r"\{.*\}", raw_text, re.DOTALL)
+                        if match:
+                            parsed = json.loads(match.group(0))
+                            if "code" in parsed and "def " in parsed["code"]:
+                                return {
+                                    "name": parsed.get("name", "AI Synthesized Option Model"),
+                                    "description": parsed.get("description", f"Generated from prompt: '{prompt}'"),
+                                    "asset_class": asset_class,
+                                    "code": parsed["code"]
+                                }
+            except Exception as e:
+                print(f"[OpenRouterSynthesizer] API notice for model '{model_to_use}': {e}")
+                continue
 
         return OpenRouterReportService._generate_fallback_synthetic_model(prompt, asset_class)
 
@@ -186,7 +193,7 @@ class OpenRouterReportService:
         assumptions: list
     ) -> str:
         """
-        Synthesizes human-readable validation summary via OpenRouter API if key present,
+        Synthesizes human-readable validation summary via OpenRouter API with multi-model resilience,
         or falls back to deterministic template synthesis.
         """
         api_key = OpenRouterReportService.get_api_key()
@@ -195,7 +202,12 @@ class OpenRouterReportService:
                 model_name, fragility_score, classification, breaking_params, assumptions
             )
 
-        model_to_use = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+        candidate_models = [
+            os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
+            "meta-llama/llama-3.1-70b-instruct",
+            "openai/gpt-4o-mini",
+            "google/gemini-flash-1.5"
+        ]
 
         system_prompt = (
             "You are a Senior Model Risk Manager and Quantitative Auditor specializing in Federal Reserve "
@@ -223,31 +235,36 @@ class OpenRouterReportService:
         4. **SR 11-7 Regulatory Compliance Audit**: Specific governance recommendations, monitoring requirements, and operational boundaries.
         """
 
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://fragment.quant",
-                        "X-Title": "FRAGMENT Model Risk Platform"
-                    },
-                    json={
-                        "model": model_to_use,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_prompt}
-                        ],
-                        "max_tokens": 800,
-                        "temperature": 0.3
-                    }
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            print(f"[OpenRouterService] API call notice: {e}")
+        for model_to_use in candidate_models:
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    response = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {api_key}",
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "https://fragment.quant",
+                            "X-Title": "FRAGMENT Model Risk Platform"
+                        },
+                        json={
+                            "model": model_to_use,
+                            "messages": [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_prompt}
+                            ],
+                            "max_tokens": 800,
+                            "temperature": 0.3
+                        }
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        if "choices" in data and len(data["choices"]) > 0:
+                            content = data["choices"][0]["message"]["content"]
+                            if content and len(content.strip()) > 50:
+                                return content
+            except Exception as e:
+                print(f"[OpenRouterService] API notice for model '{model_to_use}': {e}")
+                continue
 
         return OpenRouterReportService._generate_template_summary(
             model_name, fragility_score, classification, breaking_params, assumptions

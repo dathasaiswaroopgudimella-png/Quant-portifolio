@@ -154,7 +154,7 @@ function HexRadar({ scores }: { scores: number[] }) {
         const [x, y] = pt(i, R + 16);
         return (
           <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-            fill="#908fa0" fontSize="7.5" fontFamily="monospace">
+            fill="#908fa0" fontSize="7.5" fontFamily="'Inter', sans-serif" fontWeight="600">
             {labels[i]}
           </text>
         );
@@ -301,7 +301,7 @@ export default function LandingPage() {
               { val: 6, suffix: " Axis", label: "Model Risk Radar" },
             ].map((s, i) => (
               <div key={i} className="text-center">
-                <div className="text-2xl font-black font-mono text-[#c0c1ff]">
+                <div className="text-2xl font-black font-sans text-[#c0c1ff]">
                   <Counter to={s.val} suffix={s.suffix} />
                 </div>
                 <div className="text-xs text-[#908fa0] font-sans font-medium mt-1">{s.label}</div>

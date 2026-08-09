@@ -41,7 +41,7 @@ export default function RootLayout({
       </head>
       <body className="bg-[#0e0e10] text-[#e5e1e4] min-h-screen">
         <TopNav />
-        <main className="pt-14">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );

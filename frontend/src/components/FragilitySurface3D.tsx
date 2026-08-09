@@ -78,7 +78,8 @@ export default function FragilitySurface3D({
       }
     }
 
-    // Colors per vertex
+    // Reusable color object
+    const tempColor = new THREE.Color();
     const colors = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
@@ -92,18 +93,17 @@ export default function FragilitySurface3D({
 
       // Color gradient mapping: Green (low error) -> Yellow -> Orange -> Crimson Red (high peak error)
       const ratio = Math.min(val / maxVal, 1.0);
-      const color = new THREE.Color();
       if (ratio < 0.25) {
-        color.setHSL(0.38 - ratio * 0.4, 0.85, 0.55); // Green to Cyan
+        tempColor.setHSL(0.38 - ratio * 0.4, 0.85, 0.55); // Green to Cyan
       } else if (ratio < 0.65) {
-        color.setHSL(0.14 - (ratio - 0.25) * 0.2, 0.95, 0.55); // Yellow to Amber
+        tempColor.setHSL(0.14 - (ratio - 0.25) * 0.2, 0.95, 0.55); // Yellow to Amber
       } else {
-        color.setHSL(0.0 + (1.0 - ratio) * 0.08, 0.95, 0.55); // Crimson Red
+        tempColor.setHSL(0.0 + (1.0 - ratio) * 0.08, 0.95, 0.55); // Crimson Red
       }
 
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      colors[i * 3] = tempColor.r;
+      colors[i * 3 + 1] = tempColor.g;
+      colors[i * 3 + 2] = tempColor.b;
     }
 
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
