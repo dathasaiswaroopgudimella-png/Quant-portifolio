@@ -38,6 +38,9 @@ html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
+  /* Hard-pin dark background — prevents light-mode OS override */
+  background-color: #08080d !important;
+  color-scheme: dark;
 }
 
 html::-webkit-scrollbar { width: 6px; }
@@ -49,12 +52,23 @@ html::-webkit-scrollbar-thumb {
 
 body {
   font-family: var(--font-sans);
-  background: var(--color-bg-base);
+  /* Hard-pin: prevents Tailwind base reset from applying white */
+  background-color: #08080d !important;
+  background: #08080d !important;
   color: var(--color-text-primary);
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent any media-query light-mode bleed */
+@media (prefers-color-scheme: light) {
+  html, body {
+    background-color: #08080d !important;
+    background: #08080d !important;
+    color: #e5e1e4 !important;
+  }
 }
 
 /* Code & monospace elements */

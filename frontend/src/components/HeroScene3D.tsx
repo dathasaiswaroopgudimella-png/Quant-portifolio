@@ -23,7 +23,9 @@ export default function HeroScene3D() {
     });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x08080d, 0); // Transparent over dark space background
+    // Opaque dark background — alpha=1 prevents white flash
+    renderer.setClearColor(0x08080d, 1);
+    renderer.autoClear = true;
 
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
@@ -246,8 +248,8 @@ export default function HeroScene3D() {
   return (
     <div
       ref={mountRef}
-      className="absolute inset-0 w-full h-full bg-[#08080d]"
-      style={{ pointerEvents: "none" }}
+      className="absolute inset-0 w-full h-full"
+      style={{ pointerEvents: "none", background: "#08080d" }}
     />
   );
 }

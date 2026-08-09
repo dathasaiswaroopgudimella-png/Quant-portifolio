@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" style={{ backgroundColor: "#08080d", colorScheme: "dark" }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -39,7 +39,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#0e0e10] text-[#e5e1e4] min-h-screen">
+      <body
+        className="text-[#e5e1e4] min-h-screen"
+        style={{ backgroundColor: "#08080d", background: "#08080d" }}
+      >
         <TopNav />
         <main>{children}</main>
       </body>

@@ -223,13 +223,19 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#08080d] text-[#e5e1e4] overflow-x-hidden font-sans" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <div
+      className="min-h-screen text-[#e5e1e4] overflow-x-hidden font-sans"
+      style={{ backgroundColor: "#08080d", background: "#08080d", fontFamily: "'Inter', 'Segoe UI', sans-serif" }}
+    >
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      <section
+        className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+        style={{ backgroundColor: "#08080d" }}
+      >
 
-        {/* Full-screen 3D canvas */}
-        <div className="absolute inset-0">
+        {/* Full-screen 3D canvas — sits at z-0, background already dark */}
+        <div className="absolute inset-0" style={{ backgroundColor: "#08080d" }}>
           {mounted && <HeroScene3D />}
         </div>
 
