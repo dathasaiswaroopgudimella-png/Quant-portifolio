@@ -1,5 +1,4 @@
 mangum>=0.17.0
-QuantLib>=1.43
 fastapi>=0.115.0
 sqlalchemy[asyncio]>=2.0.0
 aiosqlite>=0.20.0

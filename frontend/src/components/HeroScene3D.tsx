@@ -10,27 +10,29 @@ export default function HeroScene3D() {
     if (!mountRef.current) return;
     const el = mountRef.current;
     let W = el.clientWidth || window.innerWidth;
-    let H = el.clientHeight || 600;
+    let H = el.clientHeight || 700;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, Math.max(W, 1) / Math.max(H, 1), 0.1, 1000);
-    camera.position.set(0, 0, 28);
+    // Deep dark space background color
+    scene.background = new THREE.Color(0x08080d);
+
+    const camera = new THREE.PerspectiveCamera(55, Math.max(W, 1) / Math.max(H, 1), 0.1, 1000);
+    camera.position.set(0, 2, 28);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: true,
+      alpha: false,
       powerPreference: "high-performance",
     });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    // Opaque dark background — alpha=1 prevents white flash
     renderer.setClearColor(0x08080d, 1);
     renderer.autoClear = true;
 
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
 
-    // Context loss handler to prevent white screens
+    // WebGL Context Loss Recovery
     const handleContextLost = (event: Event) => {
       event.preventDefault();
       console.warn("[HeroScene3D] WebGL context lost. Recovering...");
@@ -42,91 +44,92 @@ export default function HeroScene3D() {
     canvasEl.addEventListener("webglcontextlost", handleContextLost, false);
     canvasEl.addEventListener("webglcontextrestored", handleContextRestored, false);
 
-    // Color Palette
+    // Curated Vibrant Color Palette
     const palette = [
-      new THREE.Color(0xc0c1ff),
-      new THREE.Color(0x4edea3),
-      new THREE.Color(0xffb95f),
-      new THREE.Color(0xff7878),
+      new THREE.Color(0xc0c1ff), // Lavender/Purple
+      new THREE.Color(0x4edea3), // Neon Emerald Green
+      new THREE.Color(0xffb95f), // Warm Amber
+      new THREE.Color(0xff7878), // Coral Red
     ];
-
-    // Reusable single Color object for animation loop (Zero GC allocations per frame)
     const tempColor = new THREE.Color();
 
     // 1. Quantitative Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
-    const PATH_COUNT = 14;
-    const STEPS_PER_PATH = 40;
+    const PATH_COUNT = 16;
+    const STEPS_PER_PATH = 45;
     const pathGroup = new THREE.Group();
-    const pathCurves: THREE.Line[] = [];
 
     for (let p = 0; p < PATH_COUNT; p++) {
       const points: THREE.Vector3[] = [];
       let S = 100.0;
-      const mu = 0.05;
-      const sigma = 0.15 + (p % 4) * 0.05;
+      const mu = 0.04;
+      const sigma = 0.12 + (p % 5) * 0.04;
       const dt = 1.0 / STEPS_PER_PATH;
-
-      const startX = -18;
-      const startZ = (p - PATH_COUNT / 2) * 2.2;
+      const startX = -20;
+      const startZ = (p - PATH_COUNT / 2) * 2.0;
 
       for (let step = 0; step <= STEPS_PER_PATH; step++) {
-        const x = startX + (step / STEPS_PER_PATH) * 36;
+        const x = startX + (step / STEPS_PER_PATH) * 40;
         if (step > 0) {
-          const Z = (Math.random() * 2 - 1) + (Math.random() * 2 - 1); // Approx Gaussian
+          const Z = (Math.random() * 2 - 1) + (Math.random() * 2 - 1);
           S = S * Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * Z);
         }
-        const y = ((S - 100.0) / 100.0) * 16.0;
-        const z = startZ + Math.sin(step * 0.15 + p) * 0.8;
+        const y = ((S - 100.0) / 100.0) * 14.0;
+        const z = startZ + Math.sin(step * 0.18 + p) * 0.9;
         points.push(new THREE.Vector3(x, y, z));
       }
 
-      const pathGeo = new THREE.BufferGeometry().setFromPoints(points);
+      // Create thick 3D TubeGeometry instead of standard thin lines for high-DPI visibility
+      const curve = new THREE.CatmullRomCurve3(points);
+      const tubeGeo = new THREE.TubeGeometry(curve, 60, 0.08, 8, false);
       const c = palette[p % palette.length];
-      const pathMat = new THREE.LineBasicMaterial({
+      const tubeMat = new THREE.MeshStandardMaterial({
         color: c,
+        emissive: c,
+        emissiveIntensity: 0.45,
+        roughness: 0.2,
+        metalness: 0.8,
         transparent: true,
-        opacity: 0.55 + (p % 3) * 0.15,
-        linewidth: 1.5,
+        opacity: 0.85,
       });
-      const line = new THREE.Line(pathGeo, pathMat);
-      pathGroup.add(line);
-      pathCurves.push(line);
+      const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+      pathGroup.add(tubeMesh);
     }
     scene.add(pathGroup);
 
-    // 2. Animated Volatility Surface Mesh (Quant Surface)
-    const GRID = 32;
-    const surfGeo = new THREE.PlaneGeometry(38, 28, GRID, GRID);
-    surfGeo.rotateX(-Math.PI / 2);
+    // 2. Animated Volatility Surface Mesh (Dynamic Stress Tensor Grid)
+    const GRID = 36;
+    const surfGeo = new THREE.PlaneGeometry(42, 30, GRID, GRID);
+    surfGeo.rotateX(-Math.PI / 2.2);
     const surfColors = new Float32Array(surfGeo.attributes.position.count * 3);
     surfGeo.setAttribute("color", new THREE.BufferAttribute(surfColors, 3));
     surfGeo.computeVertexNormals();
+
     const surfMat = new THREE.MeshStandardMaterial({
       vertexColors: true,
       wireframe: true,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.4,
       side: THREE.DoubleSide
     });
     const surface = new THREE.Mesh(surfGeo, surfMat);
-    surface.position.set(0, -6, -3);
+    surface.position.set(0, -7, -2);
     scene.add(surface);
 
-    // 3. Floating Strike & Payoff Node Markers
+    // 3. Floating Strike & Payoff Node Markers (Octahedrons + Spheres)
     const nodeGroup = new THREE.Group();
     const nodePositions: [number, number, number][] = [
-      [-12, 5, -2], [12, 6, -4], [-8, -2, 3], [9, -3, 2],
-      [0, 8, -5], [-14, 0, -3], [14, 2, 1], [4, -6, -2],
+      [-14, 4, -2], [14, 5, -4], [-9, -2, 3], [10, -3, 2],
+      [0, 7, -5], [-15, 0, -3], [15, 2, 1], [5, -5, -2],
     ];
     nodePositions.forEach(([x, y, z], i) => {
-      const geo = new THREE.OctahedronGeometry(0.55 + (i % 3) * 0.15, 0);
+      const geo = new THREE.OctahedronGeometry(0.65 + (i % 3) * 0.15, 0);
       const mat = new THREE.MeshStandardMaterial({
         color: palette[i % palette.length],
         emissive: palette[i % palette.length],
-        emissiveIntensity: 0.6,
+        emissiveIntensity: 0.7,
         wireframe: i % 2 === 0,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.9,
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, y, z);
@@ -143,16 +146,16 @@ export default function HeroScene3D() {
       );
     });
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
-    scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xc0c1ff, transparent: true, opacity: 0.22 })));
+    scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xc0c1ff, transparent: true, opacity: 0.3 })));
 
-    // 5. Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const dLight = new THREE.DirectionalLight(0xc0c1ff, 1.5);
-    dLight.position.set(10, 20, 10);
-    scene.add(dLight);
-    const pLight = new THREE.PointLight(0x4edea3, 2.2, 60);
-    pLight.position.set(-10, 5, 5);
-    scene.add(pLight);
+    // 5. Lighting Setup for 3D Shading
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dLight1 = new THREE.DirectionalLight(0xc0c1ff, 1.8);
+    dLight1.position.set(12, 22, 15);
+    scene.add(dLight1);
+    const pLight1 = new THREE.PointLight(0x4edea3, 2.5, 70);
+    pLight1.position.set(-12, 6, 8);
+    scene.add(pLight1);
 
     // 6. Mouse Parallax
     let mouseX = 0, mouseY = 0;
@@ -162,7 +165,7 @@ export default function HeroScene3D() {
     };
     window.addEventListener("mousemove", onMM, { passive: true });
 
-    // 7. Animation Loop with Clock
+    // 7. Render Loop
     const clock = new THREE.Clock();
     let reqId: number;
     let isMounted = true;
@@ -174,20 +177,19 @@ export default function HeroScene3D() {
       const elapsedTime = clock.getElapsedTime();
       const t = elapsedTime * 0.4;
 
-      pathGroup.rotation.y = Math.sin(t * 0.3) * 0.12;
+      pathGroup.rotation.y = Math.sin(t * 0.25) * 0.1;
 
-      // Update volatility surface vertices efficiently
+      // Dynamic Surface Waves
       const sp = surfGeo.attributes.position;
       const sc = surfGeo.attributes.color as THREE.BufferAttribute;
       if (sp && sc) {
         for (let i = 0; i < sp.count; i++) {
           const x = sp.getX(i);
           const z = sp.getZ(i);
-          const y = Math.sin(x * 0.2 + t * 1.6) * Math.cos(z * 0.2 + t * 1.3) * 2.2
-                  + Math.sin(x * 0.1 + z * 0.12 + t * 2.2) * 1.4;
+          const y = Math.sin(x * 0.18 + t * 1.5) * Math.cos(z * 0.18 + t * 1.2) * 2.4
+                  + Math.sin(x * 0.08 + z * 0.1 + t * 2.0) * 1.5;
           sp.setY(i, y);
-          const ratio = Math.max(0, Math.min(1, (y + 3.6) / 7.2));
-          // Reuse tempColor to prevent GC pauses
+          const ratio = Math.max(0, Math.min(1, (y + 3.8) / 7.6));
           tempColor.setHSL(0.62 - ratio * 0.48, 0.9, 0.45 + ratio * 0.25);
           sc.setXYZ(i, tempColor.r, tempColor.g, tempColor.b);
         }
@@ -195,16 +197,16 @@ export default function HeroScene3D() {
         sc.needsUpdate = true;
       }
 
-      // Rotate strike nodes
+      // Rotate Strike Nodes
       nodeGroup.children.forEach((node, i) => {
         node.rotation.x = t * (0.5 + i * 0.1);
         node.rotation.y = t * (0.4 + i * 0.08);
         (node as THREE.Mesh).position.y = nodePositions[i][1] + Math.sin(t * 2.2 + i * 0.8) * 0.45;
       });
 
-      // Bounded camera parallax
-      const targetCamX = (mouseX || 0) * 2.5;
-      const targetCamY = -(mouseY || 0) * 1.8;
+      // Smooth Camera Movement
+      const targetCamX = (mouseX || 0) * 2.2;
+      const targetCamY = -(mouseY || 0) * 1.5;
       camera.position.x += (targetCamX - camera.position.x) * 0.04;
       camera.position.y += (targetCamY - camera.position.y) * 0.04;
       camera.lookAt(0, 0, 0);
@@ -212,7 +214,7 @@ export default function HeroScene3D() {
       try {
         renderer.render(scene, camera);
       } catch (err) {
-        // Skip frame on transient WebGL context loss
+        // Handle transient WebGL context drops
       }
     };
     animate();
@@ -220,7 +222,7 @@ export default function HeroScene3D() {
     const onResize = () => {
       if (!el || !isMounted) return;
       W = el.clientWidth || window.innerWidth;
-      H = el.clientHeight || 600;
+      H = el.clientHeight || 700;
       camera.aspect = Math.max(W, 1) / Math.max(H, 1);
       camera.updateProjectionMatrix();
       renderer.setSize(W, H);
@@ -240,7 +242,7 @@ export default function HeroScene3D() {
         surfMat.dispose();
         lineGeo.dispose();
       } catch (e) {
-        // ignore cleanup errors
+        // Ignore cleanup errors
       }
     };
   }, []);

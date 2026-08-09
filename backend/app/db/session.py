@@ -8,10 +8,13 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 # Use SQLite by default for lightweight local development unless POSTGRES_DB is explicitly enabled
-USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() in ("true", "1")
+# Dynamic DB path: use /tmp in serverless Vercel environments
+IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
 
 if USE_POSTGRES:
     db_url = settings.DATABASE_URL
+elif IS_VERCEL:
+    db_url = "sqlite+aiosqlite:////tmp/fragment.db"
 else:
     db_url = settings.SQLITE_FALLBACK_URL
 
