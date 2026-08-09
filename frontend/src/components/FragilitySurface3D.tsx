@@ -217,19 +217,19 @@ export default function FragilitySurface3D({
     <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-5 space-y-3 font-sans">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2e2c33] pb-3">
         <div>
-          <h3 className="font-bold text-xs uppercase font-mono tracking-wider text-[#e5e1e4] flex items-center gap-2">
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[#e5e1e4] flex items-center gap-2 font-sans">
             <span className="w-2 h-2 rounded-full bg-[#c0c1ff] animate-pulse" />
             {title}
           </h3>
-          <p className="text-[11px] text-[#908fa0]">
+          <p className="text-[11px] text-[#908fa0] font-sans">
             Drag mouse to rotate 3D pricing error topology &bull; Peaks represent maximal QuantLib divergence
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono">
+        <div className="flex items-center gap-2 text-xs font-sans">
           <button
             onClick={() => setAutoRotate(!autoRotate)}
-            className={`px-3 py-1 rounded-lg border transition-all ${
+            className={`px-3 py-1 rounded-lg border font-medium transition-all ${
               autoRotate
                 ? "bg-[#c0c1ff]/10 text-[#c0c1ff] border-[#c0c1ff]/30"
                 : "bg-[#0e0e10] text-[#908fa0] border-[#2e2c33]"
@@ -239,7 +239,7 @@ export default function FragilitySurface3D({
           </button>
           <button
             onClick={() => setWireframe(!wireframe)}
-            className={`px-3 py-1 rounded-lg border transition-all ${
+            className={`px-3 py-1 rounded-lg border font-medium transition-all ${
               wireframe
                 ? "bg-[#4edea3]/10 text-[#4edea3] border-[#4edea3]/30"
                 : "bg-[#0e0e10] text-[#908fa0] border-[#2e2c33]"
@@ -254,7 +254,7 @@ export default function FragilitySurface3D({
         <div ref={containerRef} className="w-full h-[360px] cursor-grab active:cursor-grabbing" />
 
         {/* Legend Overlay */}
-        <div className="absolute bottom-3 left-3 bg-[#161519]/90 backdrop-blur border border-[#2e2c33] p-2.5 rounded-lg text-[10px] font-mono text-[#908fa0] flex items-center gap-3">
+        <div className="absolute bottom-3 left-3 bg-[#161519]/90 backdrop-blur border border-[#2e2c33] p-2.5 rounded-lg text-[10px] font-sans font-medium text-[#908fa0] flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#4edea3]" />
             <span>Low Divergence (&lt;0.5%)</span>

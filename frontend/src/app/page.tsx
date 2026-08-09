@@ -239,17 +239,17 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#08080d] to-transparent" />
 
         {/* Nav */}
-        <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 z-20">
+        <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 z-20 font-sans">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#c0c1ff] to-[#4edea3] flex items-center justify-center text-[#08080d] font-black text-xs">F</div>
             <span className="font-bold text-sm tracking-widest text-[#e5e1e4]">FRAGMENT</span>
           </div>
-          <div className="flex items-center gap-6 text-xs font-mono text-[#908fa0]">
+          <div className="flex items-center gap-6 text-xs font-medium text-[#908fa0]">
             <Link href="/dashboard" className="hover:text-[#c0c1ff] transition-colors">Dashboard</Link>
             <Link href="/editor" className="hover:text-[#4edea3] transition-colors">Editor</Link>
             <Link href="/market" className="hover:text-[#ffb95f] transition-colors">Market</Link>
             <Link href="/validations" className="hover:text-[#e5e1e4] transition-colors">Validations</Link>
-            <Link href="/editor" className="px-4 py-2 bg-[#c0c1ff]/10 border border-[#c0c1ff]/30 text-[#c0c1ff] rounded-lg hover:bg-[#c0c1ff]/20 transition-all">
+            <Link href="/editor" className="px-4 py-2 bg-[#c0c1ff]/10 border border-[#c0c1ff]/30 text-[#c0c1ff] rounded-lg hover:bg-[#c0c1ff]/20 transition-all font-semibold">
               Launch →
             </Link>
           </div>
@@ -257,12 +257,12 @@ export default function LandingPage() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto" style={{ transform: `translateY(${scrollY * 0.18}px)` }}>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#c0c1ff]/8 border border-[#c0c1ff]/20 rounded-full text-[11px] font-mono text-[#c0c1ff] mb-8 backdrop-blur">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#c0c1ff]/8 border border-[#c0c1ff]/20 rounded-full text-[11px] font-sans font-medium text-[#c0c1ff] mb-8 backdrop-blur">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-pulse" />
             SR 11-7 Aligned Validation Tooling · QuantLib 1.43 · Three.js WebGL
           </div>
 
-          <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-6">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-6 font-sans">
             <span className="text-[#e5e1e4]">MODEL</span>
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c0c1ff] via-[#4edea3] to-[#ffb95f]">RISK</span>
@@ -270,10 +270,10 @@ export default function LandingPage() {
             <span className="text-[#e5e1e4] opacity-50">AUDIT</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-[#908fa0] max-w-2xl mx-auto mb-4 leading-relaxed">
+          <p className="text-lg md:text-xl text-[#908fa0] max-w-2xl mx-auto mb-4 leading-relaxed font-sans">
             Adversarial validation for quantitative pricing models.
           </p>
-          <p className="text-base text-[#606070] max-w-xl mx-auto mb-12">
+          <p className="text-base text-[#606070] max-w-xl mx-auto mb-12 font-sans">
             <TypeWriter words={[
               "Black-Scholes · Garman-Kohlhagen FX · European Options",
               "Differential Evolution · AST Inspection · QuantLib Benchmark",
@@ -281,7 +281,7 @@ export default function LandingPage() {
             ]} />
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 font-sans">
             <Link href="/editor" className="group px-8 py-3.5 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-sm rounded-xl hover:shadow-[0_0_40px_rgba(192,193,255,0.35)] transition-all duration-300 hover:scale-105">
               <span className="flex items-center gap-2">
                 Start Validation
@@ -294,7 +294,7 @@ export default function LandingPage() {
           </div>
 
           {/* Stat bar */}
-          <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto">
+          <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto font-sans">
             {[
               { val: 2, suffix: " Seeded", label: "Real Quant Models" },
               { val: 100, suffix: "%", label: "QuantLib Grounded" },
@@ -304,31 +304,31 @@ export default function LandingPage() {
                 <div className="text-2xl font-black font-mono text-[#c0c1ff]">
                   <Counter to={s.val} suffix={s.suffix} />
                 </div>
-                <div className="text-[10px] text-[#606070] font-mono mt-0.5">{s.label}</div>
+                <div className="text-xs text-[#908fa0] font-sans font-medium mt-1">{s.label}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-[#606070] text-[10px] font-mono animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-[#606070] text-[11px] font-sans font-semibold animate-bounce">
           <span>SCROLL</span>
           <div className="w-px h-8 bg-gradient-to-b from-[#606070] to-transparent" />
         </div>
       </section>
 
       {/* ── 3D SURFACE DEMO ──────────────────────────────────────────── */}
-      <section className="relative py-24 px-6">
+      <section className="relative py-24 px-6 font-sans">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-[11px] font-mono text-[#c0c1ff] tracking-widest mb-3">INTERACTIVE · WEBGL</p>
+            <p className="text-xs font-sans font-bold text-[#c0c1ff] tracking-widest uppercase mb-3">INTERACTIVE · WEBGL</p>
             <h2 className="text-4xl font-black text-[#e5e1e4] mb-4">
               Adversarial{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c0c1ff] to-[#4edea3]">
                 Fragility Surface
               </span>
             </h2>
-            <p className="text-[#908fa0] max-w-xl mx-auto text-sm leading-relaxed">
+            <p className="text-[#908fa0] max-w-xl mx-auto text-sm leading-relaxed font-sans">
               The 3D topology of where your pricing model diverges from QuantLib. Peaks are parameter regimes where your model breaks. Drag to rotate.
             </p>
           </div>
@@ -344,10 +344,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 font-sans">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-[11px] font-mono text-[#4edea3] tracking-widest mb-3">METHODOLOGY</p>
+            <p className="text-xs font-sans font-bold text-[#4edea3] tracking-widest uppercase mb-3">METHODOLOGY</p>
             <h2 className="text-4xl font-black text-[#e5e1e4]">How It Works</h2>
           </div>
 
@@ -361,12 +361,12 @@ export default function LandingPage() {
                   <div className="flex-1">
                     <div className="bg-[#111116] border border-[#2e2c33] rounded-2xl p-6 hover:border-[#c0c1ff]/30 transition-colors duration-300 relative overflow-hidden">
                       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#c0c1ff]/20 to-transparent" />
-                      <div className="text-[10px] font-mono text-[#606070] mb-2">{step.n}</div>
+                      <div className="text-xs font-sans font-bold text-[#606070] mb-2">{step.n}</div>
                       <h3 className="text-lg font-bold text-[#e5e1e4] mb-2">{step.title}</h3>
-                      <p className="text-sm text-[#908fa0] leading-relaxed">{step.desc}</p>
+                      <p className="text-sm text-[#908fa0] leading-relaxed font-sans">{step.desc}</p>
                     </div>
                   </div>
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#c0c1ff]/20 to-[#4edea3]/10 border border-[#c0c1ff]/20 flex items-center justify-center text-xl font-black text-[#c0c1ff] flex-shrink-0 z-10">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#c0c1ff]/20 to-[#4edea3]/10 border border-[#c0c1ff]/20 flex items-center justify-center text-xl font-black text-[#c0c1ff] flex-shrink-0 z-10 font-sans">
                     {i + 1}
                   </div>
                   <div className="flex-1 hidden md:block" />
@@ -378,10 +378,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES GRID ────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 font-sans">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-[11px] font-mono text-[#ffb95f] tracking-widest mb-3">CAPABILITIES</p>
+            <p className="text-xs font-sans font-bold text-[#ffb95f] tracking-widest uppercase mb-3">CAPABILITIES</p>
             <h2 className="text-4xl font-black text-[#e5e1e4] mb-4">
               Everything You Need for{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb95f] to-[#ff7878]">
@@ -393,7 +393,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
               <Card3D key={i}>
-                <div className="h-full bg-[#111116] border border-[#2e2c33] rounded-2xl p-6 hover:border-[#c0c1ff]/25 transition-all duration-300 group relative overflow-hidden">
+                <div className="h-full bg-[#111116] border border-[#2e2c33] rounded-2xl p-6 hover:border-[#c0c1ff]/25 transition-all duration-300 group relative overflow-hidden font-sans">
                   {/* Glow on hover */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     style={{ background: `radial-gradient(ellipse at 50% 0%, ${f.color}08, transparent 70%)` }} />
@@ -401,8 +401,8 @@ export default function LandingPage() {
                     style={{ background: `linear-gradient(90deg, transparent, ${f.color}40, transparent)` }} />
 
                   <div className="text-3xl mb-4">{f.icon}</div>
-                  <h3 className="font-bold text-[#e5e1e4] mb-2 text-sm">{f.title}</h3>
-                  <p className="text-xs text-[#908fa0] leading-relaxed">{f.desc}</p>
+                  <h3 className="font-bold text-[#e5e1e4] mb-2 text-sm font-sans">{f.title}</h3>
+                  <p className="text-xs text-[#908fa0] leading-relaxed font-sans">{f.desc}</p>
 
                   <div className="mt-4 w-8 h-0.5 rounded-full" style={{ background: f.color }} />
                 </div>
@@ -413,11 +413,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── RADAR DEMO ───────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 font-sans">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-[11px] font-mono text-[#c0c1ff] tracking-widest mb-3">RISK RADAR</p>
+              <p className="text-xs font-sans font-bold text-[#c0c1ff] tracking-widest uppercase mb-3">RISK RADAR</p>
               <h2 className="text-4xl font-black text-[#e5e1e4] mb-6">
                 6-Axis Hexagonal{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c0c1ff] to-[#4edea3]">
@@ -452,13 +452,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── UPLOAD MODES ─────────────────────────────────────────────── */}
-      <section className="py-24 px-6 relative overflow-hidden">
+      <section className="py-24 px-6 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#c0c1ff]/[0.02] to-transparent" />
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-16 font-sans">
-            <p className="text-[11px] font-mono text-[#4edea3] tracking-widest mb-3">FOUR WAYS TO SUBMIT</p>
+            <p className="text-xs font-sans font-bold text-[#4edea3] tracking-widest uppercase mb-3">FOUR WAYS TO SUBMIT</p>
             <h2 className="text-4xl font-black text-[#e5e1e4] mb-4">Any Model. Any Format.</h2>
-            <p className="text-[#908fa0] text-sm max-w-lg mx-auto leading-relaxed">
+            <p className="text-[#908fa0] text-sm max-w-lg mx-auto leading-relaxed font-sans">
               FRAGMENT accepts code in four ways so no model ever gets rejected at the door.
             </p>
           </div>
@@ -476,15 +476,15 @@ export default function LandingPage() {
                   <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ background: `linear-gradient(90deg, transparent, ${m.color}50, transparent)` }} />
                   <div className="text-3xl mb-3">{m.icon}</div>
-                  <div className="text-xs font-bold text-[#e5e1e4] mb-2">{m.label}</div>
+                  <div className="text-xs font-bold text-[#e5e1e4] mb-2 font-sans">{m.label}</div>
                   <div className="text-[11px] text-[#908fa0] leading-relaxed font-sans">{m.desc}</div>
                 </div>
               </Card3D>
             ))}
           </div>
 
-          <div className="text-center mt-10">
-            <Link href="/editor" className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#4edea3] to-[#2bbf88] text-[#08080d] font-bold text-sm rounded-xl hover:shadow-[0_0_40px_rgba(78,222,163,0.3)] transition-all duration-300 hover:scale-105">
+          <div className="text-center mt-10 font-sans">
+            <Link href="/editor" className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#4edea3] to-[#2bbf88] text-[#08080d] font-bold text-sm rounded-xl hover:shadow-[0_0_40px_rgba(78,222,163,0.3)] transition-all duration-300 hover:scale-105 font-sans">
               Open Model Editor →
             </Link>
           </div>
@@ -496,8 +496,8 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#c0c1ff]/[0.04] via-transparent to-[#4edea3]/[0.04]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#c0c1ff]/[0.03] rounded-full blur-3xl" />
 
-        <div className="max-w-3xl mx-auto text-center relative">
-          <p className="text-[11px] font-mono text-[#c0c1ff] tracking-widest mb-6">READY TO VALIDATE</p>
+        <div className="max-w-3xl mx-auto text-center relative font-sans">
+          <p className="text-xs font-sans font-bold text-[#c0c1ff] tracking-widest uppercase mb-6">READY TO VALIDATE</p>
           <h2 className="text-5xl md:text-6xl font-black text-[#e5e1e4] mb-6 leading-tight">
             Submit Your Model.
             <br />
