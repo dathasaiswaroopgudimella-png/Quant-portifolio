@@ -26,8 +26,9 @@ class QuantLibPricer:
 
         calendar = ql.NullCalendar()
         day_count = ql.Actual365Fixed()
-        
-        # Calculate exact maturity date with fractional day precision handling
+
+        # Integer-day maturity. QuantLib Date arithmetic requires whole calendar days.
+        # Note: introduces up to 0.5 calendar-day rounding at sub-day maturities (acceptable for options > 1 day).
         maturity_days = max(int(round(maturity_years * 365.0)), 1)
         maturity_date = today + maturity_days
 
@@ -72,9 +73,11 @@ class QuantLibPricer:
             gamma = 0.0
 
         try:
-            # QuantLib vega() is per 100% vol move (1.0). Divide by 100 to get Vega per 1% vol shift.
-            vega_1pct = float(option.vega()) / 100.0
+            # QuantLib vega() is per unit vol change (Δσ=1.0 = 100% absolute move).
+            # Market convention: vega per 1% vol point (Δσ=0.01) → divide by 100.
+            # vega_unit is stored raw (per unit move) for finite-difference comparison.
             vega_unit = float(option.vega())
+            vega_1pct = vega_unit / 100.0
         except Exception:
             vega_1pct = 0.0
             vega_unit = 0.0

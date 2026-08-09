@@ -200,7 +200,7 @@ export default function LandingPage() {
   ];
 
   const steps = [
-    { n: "01", title: "Submit Your Model", desc: "Paste Python code, describe it in plain English for AI synthesis, upload a file, or pick from 8 preset quantitative models." },
+    { n: "01", title: "Submit Your Model", desc: "Paste Python code, describe it in plain English for AI synthesis, upload a file, or pick from pre-configured quantitative models." },
     { n: "02", title: "Adversarial Search", desc: "The engine runs multi-seed differential evolution across 4D parameter space, targeting maximum normalized pricing divergence." },
     { n: "03", title: "Deep Report", desc: "Get a full audit: hexagonal radar, 3D fragility surface, Greek drift table, AST assumption map, and actionable risk boundaries." },
   ];
@@ -258,7 +258,7 @@ export default function LandingPage() {
           </p>
           <p className="text-base text-[#606070] max-w-xl mx-auto mb-12">
             <TypeWriter words={[
-              "Black-Scholes · Local Volatility · Heston · FX · Rates",
+              "Black-Scholes · Garman-Kohlhagen FX · European Options",
               "Differential Evolution · AST Inspection · QuantLib Benchmark",
               "3D Fragility Surface · Greek Drift · Risk Attribution",
             ]} />
@@ -279,9 +279,9 @@ export default function LandingPage() {
           {/* Stat bar */}
           <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto">
             {[
-              { val: 9, suffix: "/9", label: "Tests Passing" },
-              { val: 4, suffix: "D", label: "Search Space" },
-              { val: 8, suffix: " Routes", label: "Build Clean" },
+              { val: 2, suffix: " Seeded", label: "Real Quant Models" },
+              { val: 100, suffix: "%", label: "QuantLib Grounded" },
+              { val: 6, suffix: " Axis", label: "Model Risk Radar" },
             ].map((s, i) => (
               <div key={i} className="text-center">
                 <div className="text-2xl font-black font-mono text-[#c0c1ff]">

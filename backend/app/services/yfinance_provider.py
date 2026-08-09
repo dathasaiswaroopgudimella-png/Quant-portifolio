@@ -28,16 +28,33 @@ class YFinanceMarketProvider:
             # Calculate log returns using sample standard deviation (ddof=1)
             log_returns = np.log(hist["Close"] / hist["Close"].shift(1)).dropna()
             daily_vol = float(np.std(log_returns, ddof=1)) if len(log_returns) > 1 else 0.20
-            annualized_vol = float(daily_vol * np.sqrt(252))
+            annualized_hv21 = float(daily_vol * np.sqrt(252))
+
+            # Attempt to fetch 30-day ATM implied volatility from option chain
+            implied_vol = annualized_hv21 * 1.10  # Volatility risk premium default (+10%)
+            try:
+                options_dates = ticker.options
+                if options_dates:
+                    chain = ticker.option_chain(options_dates[0])
+                    calls = chain.calls
+                    # Find near-the-money call option
+                    calls['strike_diff'] = abs(calls['strike'] - spot_price)
+                    atm_call = calls.sort_values('strike_diff').iloc[0]
+                    if 'impliedVolatility' in atm_call and atm_call['impliedVolatility'] > 0:
+                        implied_vol = float(atm_call['impliedVolatility'])
+            except Exception:
+                pass
 
             return {
                 "ticker": ticker_symbol.upper(),
                 "spot_price": round(spot_price, 2),
-                "historical_volatility_21d": round(annualized_vol, 4),
+                "historical_volatility_21d": round(annualized_hv21, 4),
+                "implied_volatility_30d_atm": round(implied_vol, 4),
+                "volatility_type": "Market Implied Volatility (IV) with Realized Historical Volatility (HV) reference",
                 "risk_free_rate": 0.0525,  # Benchmark US 10Y Treasury yield
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "status": "LIVE",
-                "source": "Yahoo Finance (15-min delayed market data)"
+                "status": "DELAYED",
+                "source": "Yahoo Finance (15-min delayed option chain & quote data)"
             }
         except Exception as e:
             return YFinanceMarketProvider._get_fallback_snapshot(ticker_symbol, error=str(e))

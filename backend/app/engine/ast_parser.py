@@ -44,7 +44,8 @@ class BlackScholesASTVisitor(ast.NodeVisitor):
 
     PROHIBITED_ATTRIBUTES: Set[str] = {
         "__class__", "__subclasses__", "__globals__", "__code__",
-        "__builtins__", "__import__", "eval", "exec", "subprocess", "socket", "system", "popen", "os"
+        "__builtins__", "__import__", "eval", "exec", "subprocess", "socket", "system", "popen", "os",
+        "__bases__", "__mro__", "__init__", "__dict__", "__module__", "__getattribute__"
     }
 
     ALLOWED_MODULES: Set[str] = {
@@ -124,15 +125,15 @@ def parse_and_validate_model_code(code: str) -> Dict[str, Any]:
     param_map = {}
     for p in visitor.parameters:
         p_lower = p.lower()
-        if "s" in p_lower or "spot" in p_lower:
+        if p_lower in ["s", "spot", "spot_price", "price"]:
             param_map[p] = "spot"
-        elif "k" in p_lower or "strike" in p_lower:
+        elif p_lower in ["k", "strike", "strike_price"]:
             param_map[p] = "strike"
-        elif "t" in p_lower or "maturity" in p_lower:
+        elif p_lower in ["t", "maturity", "tenor", "time_to_maturity", "time"]:
             param_map[p] = "maturity"
-        elif "r" in p_lower or "rate" in p_lower:
+        elif p_lower in ["r", "rate", "risk_free_rate", "rf"]:
             param_map[p] = "rate"
-        elif "vol" in p_lower or "sigma" in p_lower or "v" in p_lower:
+        elif p_lower in ["vol", "sigma", "volatility", "v"]:
             param_map[p] = "volatility"
 
     return {

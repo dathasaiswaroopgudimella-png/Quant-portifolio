@@ -53,6 +53,7 @@ SEED_MODELS = [
             "time_to_maturity": 0.5,
             "risk_free_rate": 0.04,
             "volatility": 0.12,
+            "dividend_yield": 0.02,
             "option_type": "call"
         }
     }
@@ -106,6 +107,7 @@ async def seed_initial_data(db: AsyncSession) -> None:
             base_maturity=p["time_to_maturity"],
             base_rate=p["risk_free_rate"],
             base_volatility=p["volatility"],
+            dividend_yield=p.get("dividend_yield", 0.0),
             option_type=p["option_type"]
         )
 

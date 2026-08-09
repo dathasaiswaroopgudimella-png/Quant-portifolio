@@ -32,7 +32,7 @@ async def create_validation_run(
     ]
 
     # Step 1: Run SciPy Differential Evolution Adversarial Search in ThreadPool (Non-blocking async)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     adv_res = await loop.run_in_executor(
         None,
         lambda: AdversarialEngine.run_adversarial_search(
@@ -42,6 +42,7 @@ async def create_validation_run(
             base_maturity=req.time_to_maturity,
             base_rate=req.risk_free_rate,
             base_volatility=req.volatility,
+            dividend_yield=req.dividend_yield,
             option_type=req.option_type
         )
     )

@@ -42,7 +42,7 @@ class Assumption(Base):
     __tablename__ = "assumptions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    model_id: Mapped[str] = mapped_column(String(36), ForeignKey("financial_models.id"), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(36), ForeignKey("financial_models.id"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g., Volatility, Rate, Distribution
     mathematical_form: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -57,7 +57,7 @@ class ValidationRun(Base):
     __tablename__ = "validation_runs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    model_id: Mapped[str] = mapped_column(String(36), ForeignKey("financial_models.id"), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(36), ForeignKey("financial_models.id"), index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="PENDING")  # PENDING, RUNNING, COMPLETED, FAILED
     fragility_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     classification: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # ROBUST, MODERATE, FRAGILE, CRITICAL
@@ -66,6 +66,7 @@ class ValidationRun(Base):
     greek_drifts: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     fragility_surface: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc))
 
     model: Mapped["FinancialModel"] = relationship("FinancialModel", back_populates="validations")
     report: Mapped[Optional["Report"]] = relationship("Report", back_populates="validation_run", uselist=False, cascade="all, delete-orphan")
@@ -75,7 +76,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    run_id: Mapped[str] = mapped_column(String(36), ForeignKey("validation_runs.id"), nullable=False)
+    run_id: Mapped[str] = mapped_column(String(36), ForeignKey("validation_runs.id"), index=True, nullable=False)
     executive_summary: Mapped[str] = mapped_column(Text, nullable=False)
     sr11_7_compliance: Mapped[dict] = mapped_column(JSON, nullable=False)
     report_data: Mapped[dict] = mapped_column(JSON, nullable=False)

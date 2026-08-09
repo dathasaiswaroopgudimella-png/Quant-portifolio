@@ -60,6 +60,7 @@ class ValidationCreate(BaseModel):
     time_to_maturity: float = Field(default=1.0, gt=0)
     risk_free_rate: float = Field(default=0.05, ge=0)
     volatility: float = Field(default=0.20, gt=0)
+    dividend_yield: float = Field(default=0.0, ge=0)
     option_type: str = Field(default="call", pattern="^(call|put)$")
 
 class HexagonalScores(BaseModel):
