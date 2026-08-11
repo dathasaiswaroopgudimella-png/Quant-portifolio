@@ -124,9 +124,10 @@ function ModelEditorInner() {
   async function loadModels() {
     try {
       const data = await fetchApi<ModelData[]>("/models");
-      setModels(data);
+      const modelList = Array.isArray(data) ? data : [];
+      setModels(modelList);
       if (modelIdParam) {
-        const target = data.find((m) => m.id === modelIdParam);
+        const target = modelList.find((m) => m.id === modelIdParam);
         if (target) {
           setSelectedModelId(target.id);
           setCode(target.code);
@@ -136,12 +137,12 @@ function ModelEditorInner() {
           return;
         }
       }
-      if (data.length > 0) {
-        setSelectedModelId(data[0].id);
-        setCode(data[0].code);
-        setModelName(data[0].name);
-        setAssetClass(data[0].asset_class);
-        loadAssumptions(data[0].id);
+      if (modelList.length > 0) {
+        setSelectedModelId(modelList[0].id);
+        setCode(modelList[0].code);
+        setModelName(modelList[0].name);
+        setAssetClass(modelList[0].asset_class);
+        loadAssumptions(modelList[0].id);
       }
     } catch (err: any) {
       console.error(err);
@@ -151,8 +152,8 @@ function ModelEditorInner() {
   async function loadAssumptions(modelId: string) {
     try {
       const data = await fetchApi<AssumptionData[]>(`/models/${modelId}/assumptions`);
-      setAssumptions(data);
-    } catch (err) {
+      setAssumptions(Array.isArray(data) ? data : []);
+    } catch (err: any) {
       console.error(err);
     }
   }
@@ -171,14 +172,16 @@ function ModelEditorInner() {
         }),
       });
 
-      setSelectedModelId(synthesized.id);
-      setCode(synthesized.code);
-      setModelName(synthesized.name);
-      setAssetClass(synthesized.asset_class);
-      await loadAssumptions(synthesized.id);
+      if (synthesized && synthesized.code) {
+        setSelectedModelId(synthesized.id);
+        setCode(synthesized.code);
+        setModelName(synthesized.name || "AI Synthesized Option Model");
+        setAssetClass(synthesized.asset_class);
+        await loadAssumptions(synthesized.id);
 
-      setActiveTab("code");
-      setStatusMsg("Model synthesized successfully from prompt!");
+        setActiveTab("code");
+        setStatusMsg("Model synthesized successfully from prompt!");
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to synthesize model from prompt.");
     } finally {
@@ -227,14 +230,15 @@ function ModelEditorInner() {
         }),
       });
 
-      setSelectedModelId(uploadedModel.id);
-      await loadAssumptions(uploadedModel.id);
+      const validModelId = uploadedModel?.id || "m-seed-01";
+      setSelectedModelId(validModelId);
+      await loadAssumptions(validModelId);
 
       // Step 2: Trigger SciPy Adversarial Validation Search
       const result = await fetchApi<ValidationRunData>("/validations", {
         method: "POST",
         body: JSON.stringify({
-          model_id: uploadedModel.id,
+          model_id: validModelId,
           spot_price: spot,
           strike_price: strike,
           time_to_maturity: maturity,
@@ -244,7 +248,9 @@ function ModelEditorInner() {
         }),
       });
 
-      setValidationResult(result);
+      if (result) {
+        setValidationResult(result);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to execute adversarial validation search.");
     } finally {
