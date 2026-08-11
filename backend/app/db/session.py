@@ -8,8 +8,8 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 # Use SQLite by default for lightweight local development unless POSTGRES_DB is explicitly enabled
-# Dynamic DB path: use /tmp in serverless Vercel environments
 IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+USE_POSTGRES = getattr(settings, "USE_POSTGRES", False)
 
 if USE_POSTGRES:
     db_url = settings.DATABASE_URL
@@ -50,6 +50,9 @@ async def init_db() -> None:
             await conn.run_sync(Base.metadata.create_all)
 
     # Seed initial 2 quantitative option models with full validation reports
-    from app.db.seed import seed_initial_data
-    async with AsyncSessionLocal() as session:
-        await seed_initial_data(session)
+    try:
+        from app.db.seed import seed_initial_data
+        async with AsyncSessionLocal() as session:
+            await seed_initial_data(session)
+    except Exception as seed_err:
+        logger.warning(f"Initial DB seeding notice: {seed_err}")

@@ -1,11 +1,11 @@
-QuantLib>=1.43
+# FRAGMENT Backend Vercel Serverless Requirements
 fastapi>=0.115.0
 uvicorn>=0.30.0
 sqlalchemy[asyncio]>=2.0.0
-# asyncpg removed — project uses aiosqlite/SQLite, not PostgreSQL
 aiosqlite>=0.20.0
 pydantic>=2.7.0
 pydantic-settings>=2.2.0
+mangum>=0.17.0
 yfinance>=0.2.40
 sympy>=1.12
 scipy>=1.13.0
