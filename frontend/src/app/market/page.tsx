@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { fetchApi, MarketQuoteData } from "@/lib/api";
+import MarketChart from "@/components/MarketChart";
 
 const TICKERS = ["AAPL", "SPY", "NVDA", "TSLA", "MSFT", "AMZN", "META"];
 
@@ -207,6 +208,14 @@ export default function MarketMonitorPage() {
                 }
               />
             </div>
+
+            {/* Interactive Volatility & Price Trend Chart */}
+            <MarketChart
+              ticker={quote.ticker}
+              spotPrice={quote.spot_price}
+              volatility={quote.historical_volatility_21d}
+              riskFreeRate={quote.risk_free_rate}
+            />
 
             {/* Option Pricing Inputs Preview */}
             <div className="bg-[#161519] border border-[#2e2c33] rounded-xl p-6 font-sans">

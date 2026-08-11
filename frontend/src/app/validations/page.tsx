@@ -18,7 +18,7 @@ export default function ValidationsListPage() {
     setIsLoading(true);
     try {
       const data = await fetchApi<ValidationRunData[]>("/validations");
-      setValidations(data);
+      setValidations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {

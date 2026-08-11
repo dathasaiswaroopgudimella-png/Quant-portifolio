@@ -129,8 +129,8 @@ export default function DashboardPage() {
         fetchApi<ModelData[]>("/models"),
         fetchApi<ValidationRunData[]>("/validations"),
       ]);
-      setModels(mList);
-      setValidations(vList);
+      setModels(Array.isArray(mList) ? mList : []);
+      setValidations(Array.isArray(vList) ? vList : []);
     } catch (e) {
       console.error(e);
     } finally {
