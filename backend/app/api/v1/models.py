@@ -85,15 +85,7 @@ async def upload_model(
 @router.get("", response_model=List[ModelResponse])
 async def list_models(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(FinancialModel).order_by(FinancialModel.created_at.desc()))
-    models = result.scalars().all()
-    
-    if not models:
-        from app.db.seed import seed_initial_data
-        await seed_initial_data(db)
-        result = await db.execute(select(FinancialModel).order_by(FinancialModel.created_at.desc()))
-        models = result.scalars().all()
-
-    return models
+    return result.scalars().all()
 
 @router.get("/{model_id}", response_model=ModelResponse)
 async def get_model(model_id: str, db: AsyncSession = Depends(get_db)):

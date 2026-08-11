@@ -1,12 +1,7 @@
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.domain import FinancialModel, ValidationRun, Report, Assumption
-from app.engine.adversarial_engine import AdversarialEngine
-from app.engine.fragility_scorer import FragilityScorer
-from app.engine.expectations import ModelExpectationSuite
-from app.engine.assumption_engine import AssumptionExtractor
-from app.services.report_ai import OpenRouterReportService
+from app.models.domain import FinancialModel
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +19,6 @@ SEED_MODELS = [
     N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
     return S * N(d1) - K * math.exp(-r*T) * N(d2)
 """,
-        "params": {
-            "spot_price": 100.0,
-            "strike_price": 100.0,
-            "time_to_maturity": 1.0,
-            "risk_free_rate": 0.05,
-            "volatility": 0.20,
-            "option_type": "call"
-        }
     },
     {
         "name": "Garman-Kohlhagen Foreign Exchange (FX) Model",
@@ -47,151 +34,38 @@ SEED_MODELS = [
     N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
     return S * math.exp(-rf*T) * N(d1) - K * math.exp(-r*T) * N(d2)
 """,
-        "params": {
-            "spot_price": 1.10,
-            "strike_price": 1.10,
-            "time_to_maturity": 0.5,
-            "risk_free_rate": 0.04,
-            "volatility": 0.12,
-            "dividend_yield": 0.02,
-            "option_type": "call"
-        }
     }
 ]
 
+
 async def seed_initial_data(db: AsyncSession) -> None:
     """
-    Seeds database with 2 real-world quantitative option models AND pre-calculates
-    full adversarial validation runs with QuantLib ground truth, Greek drifts, 3D fragility surfaces,
-    and SR 11-7 model risk reports.
+    Fast lightweight seed — inserts the 2 canonical option model rows only.
+    Does NOT run heavy adversarial validation (that happens on user request).
+    Safe for serverless cold-start environments.
     """
-    result = await db.execute(select(FinancialModel))
-    existing_models = result.scalars().all()
-    if existing_models:
-        logger.info(f"Database already contains {len(existing_models)} models. Seed skipped.")
-        return
+    try:
+        result = await db.execute(select(FinancialModel))
+        existing = result.scalars().all()
+        if existing:
+            logger.info(f"DB already has {len(existing)} models — seed skipped.")
+            return
 
-    logger.info("Seeding database with 2 real-world quantitative models and completed adversarial validation runs...")
-
-    for spec in SEED_MODELS:
-        model = FinancialModel(
-            name=spec["name"],
-            description=spec["description"],
-            asset_class=spec["asset_class"],
-            code=spec["code"]
-        )
-        db.add(model)
-        await db.flush()
-
-        # Extract symbolic AST assumptions
-        extracted = AssumptionExtractor.extract_assumptions(spec["code"])
-        assumptions_list = []
-        for a in extracted:
-            ass_obj = Assumption(
-                model_id=model.id,
-                name=a["name"],
-                category=a["category"],
-                mathematical_form=a["mathematical_form"],
-                description=a["description"],
-                is_violated_in_stress=a["is_violated_in_stress"]
+        logger.info("Seeding 2 canonical quantitative option models...")
+        for spec in SEED_MODELS:
+            model = FinancialModel(
+                name=spec["name"],
+                description=spec["description"],
+                asset_class=spec["asset_class"],
+                code=spec["code"],
             )
-            db.add(ass_obj)
-            assumptions_list.append(a)
+            db.add(model)
 
-        # Run real Adversarial DE Search & QuantLib validation
-        p = spec["params"]
-        adv_res = AdversarialEngine.run_adversarial_search(
-            model_code=spec["code"],
-            base_spot=p["spot_price"],
-            base_strike=p["strike_price"],
-            base_maturity=p["time_to_maturity"],
-            base_rate=p["risk_free_rate"],
-            base_volatility=p["volatility"],
-            dividend_yield=p.get("dividend_yield", 0.0),
-            option_type=p["option_type"]
-        )
-
-        base_metrics = adv_res["base_metrics"]
-        breaking_params = adv_res["breaking_parameters"]
-        greek_drifts = adv_res.get("greek_drifts", {})
-        surface = adv_res["fragility_surface"]
-
-        fragility_data = FragilityScorer.calculate_fragility(
-            base_error=base_metrics["base_error"],
-            max_adversarial_error=breaking_params["absolute_error"],
-            breaking_params=breaking_params,
-            base_price=base_metrics["quantlib_price"],
-            greek_drifts=greek_drifts
-        )
-
-        hex_scores = OpenRouterReportService.compute_hexagonal_scores(
-            fragility_score=fragility_data["fragility_score"],
-            pct_error=breaking_params.get("percentage_error", 0.0),
-            greeks=base_metrics.get("base_greeks", {}),
-            greek_drifts=greek_drifts,
-            assumptions=assumptions_list,
-            breaking_params=breaking_params
-        )
-
-        expectations = ModelExpectationSuite.evaluate_expectations(
-            user_price=base_metrics["user_price"],
-            quantlib_price=base_metrics["quantlib_price"],
-            greeks=base_metrics["base_greeks"],
-            spot=p["spot_price"],
-            strike=p["strike_price"],
-            maturity=p["time_to_maturity"],
-            rate=p["risk_free_rate"],
-            option_type=p["option_type"]
-        )
-
-        val_run = ValidationRun(
-            model_id=model.id,
-            status="COMPLETED",
-            fragility_score=fragility_data["fragility_score"],
-            classification=fragility_data["classification"],
-            max_pricing_error=breaking_params["absolute_error"],
-            breaking_parameters=breaking_params,
-            greek_drifts=greek_drifts,
-            fragility_surface=surface
-        )
-        db.add(val_run)
-        await db.flush()
-
-        exec_summary = await OpenRouterReportService.generate_executive_summary(
-            model_name=model.name,
-            fragility_score=fragility_data["fragility_score"],
-            classification=fragility_data["classification"],
-            breaking_params=breaking_params,
-            assumptions=assumptions_list
-        )
-
-        sr11_7_payload = {
-            "framework": "Federal Reserve SR 11-7 Aligned Model Validation Tooling",
-            "model_name": model.name,
-            "conceptual_soundness": "PASS" if fragility_data["fragility_score"] < 40.0 else "WARNING",
-            "ongoing_monitoring": "REQUIRED",
-            "sensitivity_analysis": "PASSED_DIFFERENTIAL_EVOLUTION_SEARCH",
-            "actionable_recommendation": fragility_data["actionable_recommendation"],
-            "expectations_suite": expectations
-        }
-
-        report_payload = {
-            "summary": fragility_data["summary"],
-            "actionable_recommendation": fragility_data["actionable_recommendation"],
-            "risk_attribution": fragility_data["risk_attribution"],
-            "base_metrics": base_metrics,
-            "breaking_parameters": breaking_params,
-            "expectations": expectations,
-            "hexagonal_scores": hex_scores
-        }
-
-        report = Report(
-            run_id=val_run.id,
-            executive_summary=exec_summary,
-            sr11_7_compliance=sr11_7_payload,
-            report_data=report_payload
-        )
-        db.add(report)
-
-    await db.commit()
-    logger.info("Successfully seeded 2 real-world quantitative models and validation runs.")
+        await db.commit()
+        logger.info("Seed complete: 2 models inserted.")
+    except Exception as e:
+        logger.warning(f"Seed notice: {e}")
+        try:
+            await db.rollback()
+        except Exception:
+            pass
