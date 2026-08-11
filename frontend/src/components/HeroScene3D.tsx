@@ -221,9 +221,9 @@ export default function HeroScene3D() {
 
     const onResize = () => {
       if (!el || !isMounted) return;
-      W = el.clientWidth || window.innerWidth;
-      H = el.clientHeight || 700;
-      camera.aspect = Math.max(W, 1) / Math.max(H, 1);
+      W = Math.max(el.clientWidth, window.innerWidth, 1);
+      H = Math.max(el.clientHeight, window.innerHeight, 600);
+      camera.aspect = W / H;
       camera.updateProjectionMatrix();
       renderer.setSize(W, H);
     };

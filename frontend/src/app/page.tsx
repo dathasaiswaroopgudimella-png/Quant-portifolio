@@ -239,10 +239,9 @@ export default function LandingPage() {
           {mounted && <HeroScene3D />}
         </div>
 
-        {/* Gradient overlays for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#08080d]/30 via-transparent to-[#08080d]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#08080d]/40 via-transparent to-[#08080d]/40" />
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#08080d] to-transparent" />
+        {/* Subtle Ambient Radial Glows (Keeps 3D scene 100% visible and bright) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#08080d]/80 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#08080d] to-transparent pointer-events-none" />
 
         {/* Nav */}
         <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 z-20 font-sans">
