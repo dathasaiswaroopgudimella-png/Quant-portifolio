@@ -259,7 +259,7 @@ function ModelEditorInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-[#e5e1e4] p-6 font-sans pb-16">
+    <div className="min-h-screen bg-[#0e0e10] text-[#e5e1e4] p-6 pt-20 font-sans pb-16">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Bar */}

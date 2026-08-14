@@ -293,7 +293,7 @@ export default function LandingPage() {
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </span>
             </Link>
-            <Link href="/dashboard" className="px-8 py-3.5 bg-white/5 border border-white/10 text-[#e5e1e4] font-semibold text-sm rounded-xl hover:bg-white/10 backdrop-blur transition-all duration-300">
+            <Link href="/dashboard" className="px-8 py-3.5 bg-[#161519] border border-[#2e2c33] text-[#e5e1e4] font-semibold text-sm rounded-xl hover:bg-[#201f22] hover:border-[#c0c1ff]/40 transition-all duration-300">
               View Dashboard
             </Link>
           </div>
@@ -341,7 +341,7 @@ export default function LandingPage() {
           <div className="relative">
             {/* Glow behind */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#c0c1ff]/5 via-[#4edea3]/5 to-[#ffb95f]/5 rounded-3xl blur-3xl" />
-            <div className="relative backdrop-blur bg-white/[0.02] border border-white/[0.06] rounded-3xl p-1 shadow-[0_0_80px_rgba(192,193,255,0.08)]">
+            <div className="relative bg-[#111116] border border-[#2e2c33] rounded-3xl p-1 shadow-[0_0_80px_rgba(192,193,255,0.08)]">
               <FragilitySurface3D />
             </div>
           </div>
@@ -521,7 +521,7 @@ export default function LandingPage() {
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </span>
             </Link>
-            <Link href="/dashboard" className="px-10 py-4 bg-white/5 border border-white/10 text-[#e5e1e4] font-bold text-sm rounded-xl hover:bg-white/10 backdrop-blur transition-all duration-300">
+            <Link href="/dashboard" className="px-10 py-4 bg-[#161519] border border-[#2e2c33] text-[#e5e1e4] font-bold text-sm rounded-xl hover:bg-[#201f22] hover:border-[#c0c1ff]/40 transition-all duration-300">
               View Dashboard
             </Link>
           </div>

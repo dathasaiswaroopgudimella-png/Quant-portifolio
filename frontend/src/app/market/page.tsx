@@ -93,7 +93,7 @@ export default function MarketMonitorPage() {
   const volColor = volPct < 20 ? "#4edea3" : volPct < 35 ? "#ffb95f" : "#ff7878";
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-[#e5e1e4] font-sans">
+    <div className="min-h-screen bg-[#0e0e10] text-[#e5e1e4] font-sans pt-20">
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
         {/* Header */}

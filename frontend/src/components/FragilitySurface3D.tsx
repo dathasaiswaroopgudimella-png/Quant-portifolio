@@ -42,9 +42,15 @@ export default function FragilitySurface3D({
     camera.position.set(24, 22, 28);
     camera.lookAt(0, 2, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance",
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x0e0e10, 1.0);
+    renderer.autoClear = true;
     containerRef.current.innerHTML = "";
     containerRef.current.appendChild(renderer.domElement);
 

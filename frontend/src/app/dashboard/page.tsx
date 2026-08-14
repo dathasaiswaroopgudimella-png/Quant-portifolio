@@ -172,33 +172,7 @@ export default function DashboardPage() {
         </svg>
       </div>
 
-      <div className="relative" style={{ zIndex: 1 }}>
-
-        {/* ── Nav ──────────────────────────────────────────────────── */}
-        <nav className="sticky top-0 z-50 border-b border-[#2e2c33]/60 bg-[#08080d]/80 backdrop-blur-xl px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#c0c1ff] to-[#4edea3] flex items-center justify-center text-[#08080d] font-black text-[10px]">F</div>
-                <span className="font-bold text-xs tracking-widest text-[#e5e1e4]">FRAGMENT</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-1 text-xs font-sans font-medium">
-                {[["Dashboard", "/dashboard", "#c0c1ff"], ["Editor", "/editor", "#4edea3"], ["Market", "/market", "#ffb95f"], ["Validations", "/validations", "#908fa0"]].map(([label, href, color]) => (
-                  <Link key={href} href={href}
-                    className="px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                    style={{ color: href === "/dashboard" ? color : "#908fa0" }}>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <Link href="/editor"
-              className="px-4 py-2 bg-gradient-to-r from-[#c0c1ff] to-[#8889ff] text-[#08080d] font-bold text-xs rounded-lg hover:shadow-[0_0_20px_rgba(192,193,255,0.3)] transition-all hover:scale-105 font-sans">
-              + New Validation
-            </Link>
-          </div>
-        </nav>
-
+      <div className="relative pt-20" style={{ zIndex: 1 }}>
         <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 font-sans">
 
           {/* ── Page Header ──────────────────────────────────────────── */}

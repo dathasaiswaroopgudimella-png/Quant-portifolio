@@ -171,9 +171,50 @@ function getFallbackData<T>(endpoint: string): T {
     return {
       id: "r-seed-01",
       run_id: "v-seed-01",
-      executive_summary: `# SR 11-7 Model Risk Audit & Executive Validation Summary\n\n**Target Model**: Standard Black-Scholes Call\n**Fragility Score**: 18/100 (ROBUST)\n\nSciPy Differential Evolution global optimization verified low pricing divergence across core spot and volatility parameters relative to QuantLib ground truth.`,
-      sr11_7_compliance: { status: "APPROVED", status_tier: "LOW_RISK" },
-      report_data: {},
+      executive_summary: `## 1. Executive Summary & SR 11-7 Model Governance
+An adversarial model risk validation was completed on 'Standard Black-Scholes Call' utilizing multi-seed SciPy Differential Evolution across a 4D parameter manifold (Spot S ∈ [50, 150], Volatility σ ∈ [0.05, 0.80], Rate r ∈ [0.0, 0.15], Maturity T ∈ [0.1, 2.0]).
+• Model Robustness Rating: 82.0/100 (ROBUST TIER — Fragility Index: 18.0%)
+• Analytical Ground Truth: QuantLib 1.43 Black-Scholes-Merton Core
+• Operational Authorization: APPROVED FOR PRODUCTION USAGE WITH PREDEFINED PARAMETER BOUNDARIES
+
+## 2. Adversarial Worst-Case Perturbation Breakdown
+The global non-convex optimizer identified the maximal pricing divergence coordinate:
+• Perturbed Spot Price (S): $100.00
+• Perturbed Implied Volatility (σ): 20.0% p.a.
+• Perturbed Interest Rate (r): 5.00%
+• Candidate Model Output Price: $10.45000
+• QuantLib Ground Truth Price: $10.45058
+• Maximum Absolute Pricing Discrepancy: $0.00058 (0.0055% divergence)
+
+## 3. Abstract Syntax Tree (AST) & Mathematical Assumption Audit
+Static AST code analysis verified:
+• Constant Volatility (∂σ/∂t = 0): Standard log-normal drift assumptions validated for regular regimes; extreme stress regimes require continuous volatility recalibration.
+• Frictionless Market Mechanics: Continuous delta hedging assumes zero transaction costs and infinite depth.
+• Numerical Gradient Attribution: Volatility regime sensitivity accounts for 72.4% of total residual variance.
+
+## 4. Higher-Order Greek Sensitivity & Curvature
+• Delta (∂V/∂S = 0.6368): Precision alignment with analytical QuantLib hedges across central moneyness.
+• Vega (∂V/∂σ = 37.524): Stability confirmed under normal volatility bands; higher-order Volga risks remain constrained.
+• Gamma (∂²V/∂S² = 0.0187) & Theta (∂V/∂t = -6.414): Standard time-decay and convexity metrics align with BSM analytical bounds.
+
+## 5. Federal Reserve SR 11-7 / OCC 2011-12 Governance Mandate
+1. Operational Guard: Enforce runtime parameter assertion capping operational input volatility at σ ≤ 60.0%.
+2. Real-Time Volatility Monitoring: Recalibrate model whenever 21-day rolling historical volatility diverges by >2.0σ.
+3. Re-Validation Lifecycle: Re-audit code quarterly or upon any modification to internal Python AST logic.`,
+      sr11_7_compliance: {
+        status: "APPROVED",
+        status_tier: "LOW_RISK",
+        conceptual_soundness: "PASS",
+        ongoing_monitoring: "REQUIRED"
+      },
+      report_data: {
+        risk_attribution: {
+          volatility_regime_risk: 72.4,
+          spot_tail_convexity: 18.2,
+          interest_rate_sensitivity: 9.4
+        },
+        actionable_recommendation: "Enforce input validation guard: Constrain volatility inputs to sigma <= 60.0%. Recalibrate hedges when 21-day rolling volatility shifts."
+      },
       created_at: new Date().toISOString()
     } as unknown as T;
   }
