@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { fetchApi, MarketQuoteData } from "@/lib/api";
 import MarketChart from "@/components/MarketChart";
 
-const TICKERS = ["AAPL", "SPY", "NVDA", "TSLA", "MSFT", "AMZN", "META"];
+const TICKERS = ["AAPL", "NVDA", "SPX", "SPY", "TSLA", "MSFT", "META", "GOOGL", "EUR/USD", "BTC/USD"];
 
 // Inline SVG icons
 const RefreshIcon = ({ spin }: { spin?: boolean }) => (
