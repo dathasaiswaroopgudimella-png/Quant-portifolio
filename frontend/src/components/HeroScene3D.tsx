@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function HeroScene3D() {
+function HeroScene3DComponent() {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,9 +22,10 @@ export default function HeroScene3D() {
       antialias: true,
       alpha: false,
       powerPreference: "high-performance",
+      preserveDrawingBuffer: false,
     });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2));
     renderer.setClearColor(0x08080d, 1);
     renderer.autoClear = true;
 
@@ -33,14 +34,14 @@ export default function HeroScene3D() {
 
     // Curated Vibrant Color Palette
     const palette = [
-      new THREE.Color(0xc0c1ff), // Lavender/Purple
-      new THREE.Color(0x4edea3), // Neon Emerald Green
+      new THREE.Color(0xc0c1ff), // Lavender
+      new THREE.Color(0x4edea3), // Emerald Green
       new THREE.Color(0xffb95f), // Warm Amber
       new THREE.Color(0xff7878), // Coral Red
     ];
     const tempColor = new THREE.Color();
 
-    // 1. Quantitative Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
+    // 1. Geometric Brownian Motion (GBM) Stochastic Price Path Trajectories
     const PATH_COUNT = 16;
     const STEPS_PER_PATH = 45;
     const pathGroup = new THREE.Group();
@@ -134,7 +135,7 @@ export default function HeroScene3D() {
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
     scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xc0c1ff, transparent: true, opacity: 0.3 })));
 
-    // 5. Lighting Setup for 3D Shading
+    // 5. Lighting Setup
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
     const dLight1 = new THREE.DirectionalLight(0xc0c1ff, 1.8);
     dLight1.position.set(12, 22, 15);
@@ -151,23 +152,14 @@ export default function HeroScene3D() {
     };
     window.addEventListener("mousemove", onMM, { passive: true });
 
-    // 7. Render Loop with Visibility Optimization
+    // 7. Continuous Uninterrupted Render Loop
     const clock = new THREE.Clock();
     let reqId: number;
     let isMounted = true;
-    let isVisible = true;
-
-    // IntersectionObserver to pause when offscreen and resume when scrolled back into view
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    observer.observe(el);
 
     const animate = () => {
       if (!isMounted) return;
       reqId = requestAnimationFrame(animate);
-
-      if (!isVisible) return; // Save WebGL resources when scrolled down
 
       const elapsedTime = clock.getElapsedTime();
       const t = elapsedTime * 0.4;
@@ -206,11 +198,7 @@ export default function HeroScene3D() {
       camera.position.y += (targetCamY - camera.position.y) * 0.04;
       camera.lookAt(0, 0, 0);
 
-      try {
-        renderer.render(scene, camera);
-      } catch (err) {
-        // Safe context drop recovery
-      }
+      renderer.render(scene, camera);
     };
     animate();
 
@@ -227,7 +215,6 @@ export default function HeroScene3D() {
     return () => {
       isMounted = false;
       cancelAnimationFrame(reqId);
-      observer.disconnect();
       window.removeEventListener("mousemove", onMM);
       window.removeEventListener("resize", onResize);
       try {
@@ -236,7 +223,7 @@ export default function HeroScene3D() {
         surfMat.dispose();
         lineGeo.dispose();
       } catch (e) {
-        // Ignore cleanup
+        // Safe disposal
       }
     };
   }, []);
@@ -245,7 +232,10 @@ export default function HeroScene3D() {
     <div
       ref={mountRef}
       className="absolute inset-0 w-full h-full"
-      style={{ pointerEvents: "none", background: "#08080d" }}
+      style={{ pointerEvents: "none", background: "#08080d", zIndex: 0 }}
     />
   );
 }
+
+const HeroScene3D = React.memo(HeroScene3DComponent);
+export default HeroScene3D;

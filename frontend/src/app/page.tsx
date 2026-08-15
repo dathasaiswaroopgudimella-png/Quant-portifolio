@@ -165,14 +165,10 @@ function HexRadar({ scores }: { scores: number[] }) {
 
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 export default function LandingPage() {
-  const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const demoScores = [88, 91, 76, 94, 83, 89];
@@ -261,7 +257,7 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero Content */}
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto" style={{ transform: `translateY(${scrollY * 0.18}px)` }}>
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#c0c1ff]/8 border border-[#c0c1ff]/20 rounded-full text-[11px] font-sans font-medium text-[#c0c1ff] mb-8 backdrop-blur">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-pulse" />
             SR 11-7 Aligned Validation Tooling · QuantLib 1.43 · Three.js WebGL
