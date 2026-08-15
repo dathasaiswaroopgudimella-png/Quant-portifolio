@@ -24,9 +24,11 @@ const PRESET_MODELS = [
   {
     name: "Standard Black-Scholes Call",
     asset_class: "Equity Options",
-    desc: "Analytical European call option pricing function",
+    desc: "Baseline analytical European call option pricing function with constant volatility",
     code: `def black_scholes_call(S, K, T, r, sigma):
     import math
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return 0.0
     d1 = (math.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))
     d2 = d1 - sigma*math.sqrt(T)
     N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
@@ -39,6 +41,8 @@ const PRESET_MODELS = [
     desc: "Analytical European put option using put-call parity formulation",
     code: `def black_scholes_put(S, K, T, r, sigma):
     import math
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return max(0.0, K - S)
     d1 = (math.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))
     d2 = d1 - sigma*math.sqrt(T)
     N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
@@ -48,14 +52,106 @@ const PRESET_MODELS = [
   {
     name: "Garman-Kohlhagen Foreign Exchange (FX) Model",
     asset_class: "FX Options",
-    desc: "Garman-Kohlhagen extension for currency option valuation with foreign rate rf=2%",
+    desc: "Currency option model with domestic rate r=4% and foreign rate rf=2%",
     code: `def garman_kohlhagen_fx(S, K, T, r, sigma):
     import math
-    rf = 0.02  # foreign risk-free rate assumption
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return 0.0
+    rf = 0.02
     d1 = (math.log(S/K) + (r - rf + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))
     d2 = d1 - sigma*math.sqrt(T)
     N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
     return S * math.exp(-rf*T) * N(d1) - K * math.exp(-r*T) * N(d2)
+`,
+  },
+  {
+    name: "Merton (1976) Jump-Diffusion Pricing Engine",
+    asset_class: "Equity Options",
+    desc: "Poisson jump-diffusion model for heavy-tailed, discontinuous market shocks",
+    code: `def merton_jump_diffusion(S, K, T, r, sigma):
+    import math
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return 0.0
+    lam = 0.75
+    gamma_j = -0.05
+    delta_j = 0.15
+    k = math.exp(gamma_j + 0.5 * delta_j**2) - 1.0
+    lam_prime = lam * (1.0 + k)
+    total_price = 0.0
+    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+    for n in range(25):
+        p_n = (math.exp(-lam_prime * T) * (lam_prime * T)**n) / math.factorial(n)
+        sigma_n = math.sqrt(sigma**2 + n * (delta_j**2) / T)
+        r_n = r - lam * k + n * math.log(1.0 + k) / T
+        d1 = (math.log(S/K) + (r_n + 0.5 * sigma_n**2) * T) / (sigma_n * math.sqrt(T))
+        d2 = d1 - sigma_n * math.sqrt(T)
+        bs_n = S * N(d1) - K * math.exp(-r_n * T) * N(d2)
+        total_price += p_n * max(0.0, bs_n)
+    return total_price
+`,
+  },
+  {
+    name: "Bjerksund-Stensland (2002) American Option Model",
+    asset_class: "American Options",
+    desc: "High-precision closed-form approximation for early-exercise American options",
+    code: `def bjerksund_stensland_american(S, K, T, r, sigma):
+    import math
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return max(0.0, S - K)
+    q = 0.01
+    b = r - q
+    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+    d1 = (math.log(S/K) + (b + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))
+    d2 = d1 - sigma*math.sqrt(T)
+    bs_call = S * math.exp(-q*T) * N(d1) - K * math.exp(-r*T) * N(d2)
+    beta = (0.5 - b / sigma**2) + math.sqrt((b / sigma**2 - 0.5)**2 + 2 * r / sigma**2)
+    B_inf = (beta / (beta - 1.0)) * K
+    B_0 = max(K, (r / (r - b)) * K) if r != b else K
+    h_t = -(b * T + 2 * sigma * math.sqrt(T)) * (B_0 / (B_inf - B_0))
+    I = B_0 + (B_inf - B_0) * (1.0 - math.exp(h_t))
+    if S >= I:
+        return S - K
+    return max(bs_call, bs_call + (I - K) * ((S / I) ** beta) * (1.0 - math.exp(-r*T)))
+`,
+  },
+  {
+    name: "Corrado-Su Gram-Charlier Skewness & Kurtosis Model",
+    asset_class: "Index Options",
+    desc: "Adjusts Black-Scholes for observed non-Gaussian skewness and kurtosis",
+    code: `def corrado_su_skew_kurtosis(S, K, T, r, sigma):
+    import math
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+        return 0.0
+    skewness = -0.65
+    kurtosis = 3.90
+    sqrt_T = math.sqrt(T)
+    d = (math.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*sqrt_T)
+    d2 = d - sigma*sqrt_T
+    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+    n_d = (1.0 / math.sqrt(2.0 * math.pi)) * math.exp(-0.5 * d**2)
+    c_bs = S * N(d) - K * math.exp(-r*T) * N(d2)
+    mu3 = skewness
+    mu4 = kurtosis - 3.0
+    Q3 = (1.0 / 6.0) * S * sqrt_T * (2 * sigma * sqrt_T - d) * n_d
+    Q4 = (1.0 / 24.0) * S * sqrt_T * (d**2 - 1.0 - 3*d*sigma*sqrt_T + 3*(sigma*sqrt_T)**2) * n_d
+    return max(0.0, c_bs + mu3 * Q3 + mu4 * Q4)
+`,
+  },
+  {
+    name: "Bachelier (1900) Normal Spread & Negative Rate Model",
+    asset_class: "Commodity / Spread",
+    desc: "Bachelier arithmetic Brownian motion supporting negative rates & spread valuation",
+    code: `def bachelier_normal_pricer(S, K, T, r, sigma):
+    import math
+    if T <= 0 or sigma <= 0:
+        return max(0.0, S - K)
+    sigma_normal = sigma * S
+    sqrt_T = math.sqrt(T)
+    d = (S - K) / (sigma_normal * sqrt_T)
+    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+    n_d = (1.0 / math.sqrt(2.0 * math.pi)) * math.exp(-0.5 * d**2)
+    disc = math.exp(-r * T)
+    return max(0.0, disc * ((S - K) * N(d) + sigma_normal * sqrt_T * n_d))
 `,
   },
   {
@@ -64,7 +160,6 @@ const PRESET_MODELS = [
     desc: "Pricing model susceptible to extreme volatility skew breakdown",
     code: `def skew_vulnerable_option(S, K, T, r, sigma):
     import math
-    # Linear volatility adjustment approximation (breaks under high vol)
     adj_sigma = sigma * (1.0 + 0.15 * (S - K) / K)
     adj_sigma = max(0.01, adj_sigma)
     d1 = (math.log(S/K) + (r + 0.5*adj_sigma**2)*T) / (adj_sigma*math.sqrt(T))

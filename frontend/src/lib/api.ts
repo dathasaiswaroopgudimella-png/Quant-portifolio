@@ -55,6 +55,24 @@ const SEED_MODELS: ModelData[] = [
     code: `def garman_kohlhagen_fx(S, K, T, r, sigma):\n    import math\n    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:\n        return 0.0\n    rf = 0.02\n    d1 = (math.log(S/K) + (r - rf + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))\n    d2 = d1 - sigma*math.sqrt(T)\n    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))\n    return S * math.exp(-rf*T) * N(d1) - K * math.exp(-r*T) * N(d2)`,
     version: "1.0.0",
     created_at: "2026-08-09T10:05:00Z"
+  },
+  {
+    id: "m-seed-03",
+    name: "Merton (1976) Jump-Diffusion Model",
+    description: "Superimposes Poisson-distributed discontinuous jump shocks onto continuous geometric Brownian motion for fat-tailed market regimes.",
+    asset_class: "Equity Options",
+    code: `def merton_jump_diffusion(S, K, T, r, sigma):\n    import math\n    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:\n        return 0.0\n    lam = 0.75\n    gamma_j = -0.05\n    delta_j = 0.15\n    k = math.exp(gamma_j + 0.5 * delta_j**2) - 1.0\n    lam_prime = lam * (1.0 + k)\n    total_price = 0.0\n    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))\n    for n in range(25):\n        p_n = (math.exp(-lam_prime * T) * (lam_prime * T)**n) / math.factorial(n)\n        sigma_n = math.sqrt(sigma**2 + n * (delta_j**2) / T)\n        r_n = r - lam * k + n * math.log(1.0 + k) / T\n        d1 = (math.log(S/K) + (r_n + 0.5 * sigma_n**2) * T) / (sigma_n * math.sqrt(T))\n        d2 = d1 - sigma_n * math.sqrt(T)\n        bs_n = S * N(d1) - K * math.exp(-r_n * T) * N(d2)\n        total_price += p_n * max(0.0, bs_n)\n    return total_price`,
+    version: "1.0.0",
+    created_at: "2026-08-16T00:00:00Z"
+  },
+  {
+    id: "m-seed-04",
+    name: "Bjerksund-Stensland (2002) American Option Model",
+    description: "High-precision closed-form analytical approximation for early-exercise American options on dividend-paying equities.",
+    asset_class: "American Options",
+    code: `def bjerksund_stensland_american(S, K, T, r, sigma):\n    import math\n    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:\n        return max(0.0, S - K)\n    q = 0.01\n    b = r - q\n    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))\n    d1 = (math.log(S/K) + (b + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))\n    d2 = d1 - sigma*math.sqrt(T)\n    bs_call = S * math.exp(-q*T) * N(d1) - K * math.exp(-r*T) * N(d2)\n    beta = (0.5 - b / sigma**2) + math.sqrt((b / sigma**2 - 0.5)**2 + 2 * r / sigma**2)\n    B_inf = (beta / (beta - 1.0)) * K\n    B_0 = max(K, (r / (r - b)) * K) if r != b else K\n    h_t = -(b * T + 2 * sigma * math.sqrt(T)) * (B_0 / (B_inf - B_0))\n    I = B_0 + (B_inf - B_0) * (1.0 - math.exp(h_t))\n    if S >= I:\n        return S - K\n    return max(bs_call, bs_call + (I - K) * ((S / I) ** beta) * (1.0 - math.exp(-r*T)))`,
+    version: "1.0.0",
+    created_at: "2026-08-16T00:00:00Z"
   }
 ];
 

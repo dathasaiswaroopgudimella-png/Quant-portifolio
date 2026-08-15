@@ -9,14 +9,13 @@ export default function HeroScene3D() {
   useEffect(() => {
     if (!mountRef.current) return;
     const el = mountRef.current;
-    let W = el.clientWidth || window.innerWidth;
-    let H = el.clientHeight || 700;
+    let W = Math.max(el.clientWidth, window.innerWidth, 1);
+    let H = Math.max(el.clientHeight, window.innerHeight, 700);
 
     const scene = new THREE.Scene();
-    // Deep dark space background color
     scene.background = new THREE.Color(0x08080d);
 
-    const camera = new THREE.PerspectiveCamera(55, Math.max(W, 1) / Math.max(H, 1), 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 1000);
     camera.position.set(0, 2, 28);
 
     const renderer = new THREE.WebGLRenderer({
@@ -31,18 +30,6 @@ export default function HeroScene3D() {
 
     el.innerHTML = "";
     el.appendChild(renderer.domElement);
-
-    // WebGL Context Loss Recovery
-    const handleContextLost = (event: Event) => {
-      event.preventDefault();
-      console.warn("[HeroScene3D] WebGL context lost. Recovering...");
-    };
-    const handleContextRestored = () => {
-      console.info("[HeroScene3D] WebGL context restored.");
-    };
-    const canvasEl = renderer.domElement;
-    canvasEl.addEventListener("webglcontextlost", handleContextLost, false);
-    canvasEl.addEventListener("webglcontextrestored", handleContextRestored, false);
 
     // Curated Vibrant Color Palette
     const palette = [
@@ -78,7 +65,6 @@ export default function HeroScene3D() {
         points.push(new THREE.Vector3(x, y, z));
       }
 
-      // Create thick 3D TubeGeometry instead of standard thin lines for high-DPI visibility
       const curve = new THREE.CatmullRomCurve3(points);
       const tubeGeo = new THREE.TubeGeometry(curve, 60, 0.08, 8, false);
       const c = palette[p % palette.length];
@@ -115,7 +101,7 @@ export default function HeroScene3D() {
     surface.position.set(0, -7, -2);
     scene.add(surface);
 
-    // 3. Floating Strike & Payoff Node Markers (Octahedrons + Spheres)
+    // 3. Floating Strike & Payoff Node Markers
     const nodeGroup = new THREE.Group();
     const nodePositions: [number, number, number][] = [
       [-14, 4, -2], [14, 5, -4], [-9, -2, 3], [10, -3, 2],
@@ -165,14 +151,23 @@ export default function HeroScene3D() {
     };
     window.addEventListener("mousemove", onMM, { passive: true });
 
-    // 7. Render Loop
+    // 7. Render Loop with Visibility Optimization
     const clock = new THREE.Clock();
     let reqId: number;
     let isMounted = true;
+    let isVisible = true;
+
+    // IntersectionObserver to pause when offscreen and resume when scrolled back into view
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    observer.observe(el);
 
     const animate = () => {
       if (!isMounted) return;
       reqId = requestAnimationFrame(animate);
+
+      if (!isVisible) return; // Save WebGL resources when scrolled down
 
       const elapsedTime = clock.getElapsedTime();
       const t = elapsedTime * 0.4;
@@ -214,7 +209,7 @@ export default function HeroScene3D() {
       try {
         renderer.render(scene, camera);
       } catch (err) {
-        // Handle transient WebGL context drops
+        // Safe context drop recovery
       }
     };
     animate();
@@ -222,7 +217,7 @@ export default function HeroScene3D() {
     const onResize = () => {
       if (!el || !isMounted) return;
       W = Math.max(el.clientWidth, window.innerWidth, 1);
-      H = Math.max(el.clientHeight, window.innerHeight, 600);
+      H = Math.max(el.clientHeight, window.innerHeight, 700);
       camera.aspect = W / H;
       camera.updateProjectionMatrix();
       renderer.setSize(W, H);
@@ -232,17 +227,16 @@ export default function HeroScene3D() {
     return () => {
       isMounted = false;
       cancelAnimationFrame(reqId);
+      observer.disconnect();
       window.removeEventListener("mousemove", onMM);
       window.removeEventListener("resize", onResize);
-      canvasEl.removeEventListener("webglcontextlost", handleContextLost);
-      canvasEl.removeEventListener("webglcontextrestored", handleContextRestored);
       try {
         renderer.dispose();
         surfGeo.dispose();
         surfMat.dispose();
         lineGeo.dispose();
       } catch (e) {
-        // Ignore cleanup errors
+        // Ignore cleanup
       }
     };
   }, []);

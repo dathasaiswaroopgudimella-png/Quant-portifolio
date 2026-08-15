@@ -186,10 +186,17 @@ export default function FragilitySurface3D({
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
-    // 7. Animation Loop
+    // 7. Animation Loop with IntersectionObserver
     let reqId: number;
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    if (containerRef.current) observer.observe(containerRef.current);
+
     const animate = () => {
       reqId = requestAnimationFrame(animate);
+      if (!isVisible) return;
       if (autoRotate && !isDragging) {
         mesh.rotation.y += 0.004;
       }
@@ -209,6 +216,7 @@ export default function FragilitySurface3D({
 
     return () => {
       cancelAnimationFrame(reqId);
+      observer.disconnect();
       window.removeEventListener("resize", handleResize);
       domEl.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);

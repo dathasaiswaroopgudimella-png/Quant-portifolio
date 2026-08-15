@@ -6,9 +6,7 @@ from sqlalchemy import select
 from app.db.session import get_db
 from app.models.domain import FinancialModel, ValidationRun, Report, Assumption
 from app.schemas.schemas import ValidationCreate, ValidationResponse, HexagonalScores
-from app.engine.adversarial_engine import AdversarialEngine
-from app.engine.fragility_scorer import FragilityScorer
-from app.engine.expectations import ModelExpectationSuite
+from app.engine.multi_agent_system import MultiAgentQuantPipeline
 from app.services.report_ai import OpenRouterReportService
 
 router = APIRouter(prefix="/validations", tags=["Validation Engine"])
@@ -24,66 +22,35 @@ async def create_validation_run(
     if not model:
         raise HTTPException(status_code=404, detail="Target financial model not found.")
 
-    # Fetch model assumptions for baseline evaluation
-    assumptions_res = await db.execute(select(Assumption).where(Assumption.model_id == model.id))
-    assumptions_list = [
-        {"name": a.name, "category": a.category, "mathematical_form": a.mathematical_form}
-        for a in assumptions_res.scalars().all()
-    ]
-
-    # Step 1: Run SciPy Differential Evolution Adversarial Search in ThreadPool (Non-blocking async)
+    # Execute complete multi-agent pipeline
     loop = asyncio.get_running_loop()
-    adv_res = await loop.run_in_executor(
+    pipeline_res = await loop.run_in_executor(
         None,
-        lambda: AdversarialEngine.run_adversarial_search(
-            model_code=model.code,
-            base_spot=req.spot_price,
-            base_strike=req.strike_price,
-            base_maturity=req.time_to_maturity,
-            base_rate=req.risk_free_rate,
-            base_volatility=req.volatility,
-            dividend_yield=req.dividend_yield,
-            option_type=req.option_type
+        lambda: asyncio.run(
+            MultiAgentQuantPipeline.execute_full_validation_pipeline(
+                model_name=model.name,
+                model_code=model.code,
+                spot=req.spot_price,
+                strike=req.strike_price,
+                maturity=req.time_to_maturity,
+                rate=req.risk_free_rate,
+                volatility=req.volatility,
+                dividend_yield=req.dividend_yield,
+                option_type=req.option_type
+            )
         )
     )
 
-    base_metrics = adv_res["base_metrics"]
-    breaking_params = adv_res["breaking_parameters"]
-    greek_drifts = adv_res.get("greek_drifts", {})
-    surface = adv_res["fragility_surface"]
+    fragility_data = pipeline_res["fragility_data"]
+    breaking_params = pipeline_res["breaking_parameters"]
+    greek_drifts = pipeline_res["greek_drifts"]
+    surface = pipeline_res["fragility_surface"]
+    hex_scores = pipeline_res["hexagonal_scores"]
+    exec_summary = pipeline_res["executive_summary"]
+    sr11_7_payload = pipeline_res["sr11_7_payload"]
+    report_payload = pipeline_res["report_payload"]
 
-    # Step 2: Compute Fragility Index & Numerical Sensitivity Attribution
-    fragility_data = FragilityScorer.calculate_fragility(
-        base_error=base_metrics["base_error"],
-        max_adversarial_error=breaking_params["absolute_error"],
-        breaking_params=breaking_params,
-        base_price=base_metrics["quantlib_price"],
-        greek_drifts=greek_drifts
-    )
-
-    # Step 3: Compute Independent 6-axis Radar Metrics
-    hex_scores = OpenRouterReportService.compute_hexagonal_scores(
-        fragility_score=fragility_data["fragility_score"],
-        pct_error=breaking_params.get("percentage_error", 0.0),
-        greeks=base_metrics.get("base_greeks", {}),
-        greek_drifts=greek_drifts,
-        assumptions=assumptions_list,
-        breaking_params=breaking_params
-    )
-
-    # Step 4: Run Formal Verification Expectation Suite
-    expectations = ModelExpectationSuite.evaluate_expectations(
-        user_price=base_metrics["user_price"],
-        quantlib_price=base_metrics["quantlib_price"],
-        greeks=base_metrics["base_greeks"],
-        spot=req.spot_price,
-        strike=req.strike_price,
-        maturity=req.time_to_maturity,
-        rate=req.risk_free_rate,
-        option_type=req.option_type
-    )
-
-    # Step 5: Save ValidationRun
+    # Save ValidationRun
     val_run = ValidationRun(
         model_id=model.id,
         status="COMPLETED",
@@ -97,35 +64,6 @@ async def create_validation_run(
     db.add(val_run)
     await db.flush()
 
-    # Step 6: Generate Executive Governance Summary
-    exec_summary = await OpenRouterReportService.generate_executive_summary(
-        model_name=model.name,
-        fragility_score=fragility_data["fragility_score"],
-        classification=fragility_data["classification"],
-        breaking_params=breaking_params,
-        assumptions=assumptions_list
-    )
-
-    sr11_7_payload = {
-        "framework": "Federal Reserve SR 11-7 Aligned Model Validation Tooling",
-        "model_name": model.name,
-        "conceptual_soundness": "PASS" if fragility_data["fragility_score"] < 40.0 else "WARNING",
-        "ongoing_monitoring": "REQUIRED",
-        "sensitivity_analysis": "PASSED_DIFFERENTIAL_EVOLUTION_SEARCH",
-        "actionable_recommendation": fragility_data["actionable_recommendation"],
-        "expectations_suite": expectations
-    }
-
-    report_payload = {
-        "summary": fragility_data["summary"],
-        "actionable_recommendation": fragility_data["actionable_recommendation"],
-        "risk_attribution": fragility_data["risk_attribution"],
-        "base_metrics": base_metrics,
-        "breaking_parameters": breaking_params,
-        "expectations": expectations,
-        "hexagonal_scores": hex_scores
-    }
-
     report = Report(
         run_id=val_run.id,
         executive_summary=exec_summary,
@@ -136,8 +74,7 @@ async def create_validation_run(
 
     await db.commit()
     await db.refresh(val_run)
-    
-    # Attach hex_scores dynamically to response
+
     res_data = ValidationResponse.model_validate(val_run)
     res_data.hexagonal_scores = HexagonalScores(**hex_scores)
     return res_data
