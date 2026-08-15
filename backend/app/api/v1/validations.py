@@ -1,4 +1,3 @@
-import asyncio
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,22 +22,16 @@ async def create_validation_run(
         raise HTTPException(status_code=404, detail="Target financial model not found.")
 
     # Execute complete multi-agent pipeline
-    loop = asyncio.get_running_loop()
-    pipeline_res = await loop.run_in_executor(
-        None,
-        lambda: asyncio.run(
-            MultiAgentQuantPipeline.execute_full_validation_pipeline(
-                model_name=model.name,
-                model_code=model.code,
-                spot=req.spot_price,
-                strike=req.strike_price,
-                maturity=req.time_to_maturity,
-                rate=req.risk_free_rate,
-                volatility=req.volatility,
-                dividend_yield=req.dividend_yield,
-                option_type=req.option_type
-            )
-        )
+    pipeline_res = await MultiAgentQuantPipeline.execute_full_validation_pipeline(
+        model_name=model.name,
+        model_code=model.code,
+        spot=req.spot_price,
+        strike=req.strike_price,
+        maturity=req.time_to_maturity,
+        rate=req.risk_free_rate,
+        volatility=req.volatility,
+        dividend_yield=req.dividend_yield,
+        option_type=req.option_type
     )
 
     fragility_data = pipeline_res["fragility_data"]

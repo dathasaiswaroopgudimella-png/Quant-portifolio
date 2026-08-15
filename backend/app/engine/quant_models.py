@@ -3,9 +3,28 @@ FRAGMENT Quantitative Models Suite (Inspired by awesome-quant)
 Industrial-grade closed-form and semi-analytical valuation models with exact Greeks.
 """
 import math
-import numpy as np
-from scipy.stats import norm
 from typing import Dict, Any, Optional, Tuple
+
+try:
+    import numpy as np
+    from scipy.stats import norm as _norm
+    def _N(x: float) -> float:
+        return float(_norm.cdf(x))
+    def _n(x: float) -> float:
+        return float(_norm.pdf(x))
+except ImportError:
+    np = None  # type: ignore
+    def _N(x: float) -> float:
+        """Standard normal CDF via Horner-form minimax approximation (Abramowitz & Stegun 26.2.17)."""
+        if x < -8.0: return 0.0
+        if x > 8.0: return 1.0
+        k = 1.0 / (1.0 + 0.2316419 * abs(x))
+        poly = k * (0.319381530 + k * (-0.356563782 + k * (1.781477937 + k * (-1.821255978 + k * 1.330274429))))
+        result = 1.0 - (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x) * poly
+        return result if x >= 0 else 1.0 - result
+    def _n(x: float) -> float:
+        """Standard normal PDF."""
+        return math.exp(-0.5 * x * x) / math.sqrt(2 * math.pi)
 
 
 class QuantModels:
@@ -30,11 +49,11 @@ class QuantModels:
         d1 = (math.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * sqrt_T)
         d2 = d1 - sigma * sqrt_T
 
-        pdf_d1 = norm.pdf(d1)
-        cdf_d1 = norm.cdf(d1)
-        cdf_d2 = norm.cdf(d2)
-        cdf_neg_d1 = norm.cdf(-d1)
-        cdf_neg_d2 = norm.cdf(-d2)
+        pdf_d1 = _n(d1)
+        cdf_d1 = _N(d1)
+        cdf_d2 = _N(d2)
+        cdf_neg_d1 = _N(-d1)
+        cdf_neg_d2 = _N(-d2)
 
         exp_neg_qT = math.exp(-q * T)
         exp_neg_rT = math.exp(-r * T)
@@ -215,8 +234,8 @@ class QuantModels:
             d_val = -(math.log(S_in / H_in) + (b + (gamma_in - 0.5) * (sigma ** 2)) * T_in) / (sigma * math.sqrt(T_in))
             kappa_val = (2.0 * b / (sigma ** 2)) + (2.0 * gamma_in - 1.0)
             return (math.exp(lambda_val) * (S_in ** gamma_in) *
-                    (norm.cdf(d_val) - ((I_in / S_in) ** kappa_val) *
-                     norm.cdf(d_val - 2.0 * math.log(I_in / S_in) / (sigma * math.sqrt(T_in)))))
+                    (_N(d_val) - ((I_in / S_in) ** kappa_val) *
+                     _N(d_val - 2.0 * math.log(I_in / S_in) / (sigma * math.sqrt(T_in)))))
 
         alpha = (I - K) * (I ** (-beta))
         bs_price = QuantModels.black_scholes(S=S, K=K, T=T, r=r, sigma=sigma, q=q, option_type="call")["price"]
@@ -241,7 +260,7 @@ class QuantModels:
         sqrt_T = math.sqrt(T)
         d = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * sqrt_T)
         
-        n_d = norm.pdf(d)
+        n_d = _n(d)
         mu3 = skewness
         mu4 = kurtosis - 3.0  # Excess kurtosis
 
@@ -300,9 +319,9 @@ class QuantModels:
         disc = math.exp(-r * T)
         
         if option_type.lower() == "call":
-            price = disc * ((S - K) * norm.cdf(d) + sigma_normal * math.sqrt(T) * norm.pdf(d))
+            price = disc * ((S - K) * _N(d) + sigma_normal * math.sqrt(T) * _n(d))
         else:
-            price = disc * ((K - S) * norm.cdf(-d) + sigma_normal * math.sqrt(T) * norm.pdf(d))
+            price = disc * ((K - S) * _N(-d) + sigma_normal * math.sqrt(T) * _n(d))
 
         return max(0.0, float(price))
 
@@ -343,8 +362,8 @@ class QuantModels:
             y2 = y1 - sigma * math.sqrt(T)
             
             c_vanilla = QuantModels.black_scholes(S=S, K=H, T=T, r=r, sigma=sigma, option_type="call")["price"]
-            c_knock_out = c_vanilla - (S * norm.cdf(d1) - H * math.exp(-r * T) * norm.cdf(d2)) + \
-                          ((H / S) ** (2 * mu)) * (H * norm.cdf(y1) - S * math.exp(-r * T) * norm.cdf(y2))
+            c_knock_out = c_vanilla - (S * _N(d1) - H * math.exp(-r * T) * _N(d2)) + \
+                          ((H / S) ** (2 * mu)) * (H * _N(y1) - S * math.exp(-r * T) * _N(y2))
             return max(0.0, float(c_knock_out))
         else:
             # H < K standard down-and-out

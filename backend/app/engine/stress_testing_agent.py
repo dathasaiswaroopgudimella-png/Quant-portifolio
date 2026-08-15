@@ -2,9 +2,23 @@
 FRAGMENT Stress Testing & Crisis Replay Agent (Inspired by AgentQuant)
 Executes historical tail-risk scenario replays and computes Value-at-Risk (VaR) / Expected Shortfall (CVaR).
 """
-import numpy as np
-from scipy.stats import norm
+import math
 from typing import Dict, Any, List, Callable
+
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    np = None  # type: ignore
+    HAS_NUMPY = False
+
+try:
+    from scipy.stats import norm as _norm
+    def _norm_pdf(x: float) -> float:
+        return float(_norm.pdf(x))
+except ImportError:
+    def _norm_pdf(x: float) -> float:
+        return math.exp(-0.5 * x * x) / math.sqrt(2 * math.pi)
 
 
 class StressTestingAgent:
@@ -99,11 +113,15 @@ class StressTestingAgent:
             })
 
         # Parametric & Historical VaR calculation (10-day 99% VaR)
-        # S&P 500 daily vol estimated from base_vol
-        daily_vol = base_vol / np.sqrt(252)
+        daily_vol = base_vol / math.sqrt(252)
         var_95_1d = notional * 1.645 * daily_vol
         var_99_1d = notional * 2.326 * daily_vol
-        cvar_99_1d = notional * (norm.pdf(2.326) / 0.01) * daily_vol  # Expected Shortfall
+        cvar_99_1d = notional * (_norm_pdf(2.326) / 0.01) * daily_vol  # Expected Shortfall
+
+        if HAS_NUMPY and np is not None:
+            var_99_10day = round(var_99_1d * float(np.sqrt(10)), 2)
+        else:
+            var_99_10day = round(var_99_1d * math.sqrt(10), 2)
 
         max_historical_loss = max(losses) if losses else 0.0
 
@@ -120,7 +138,7 @@ class StressTestingAgent:
             "tail_risk_metrics": {
                 "var_95_1day": round(var_95_1d, 2),
                 "var_99_1day": round(var_99_1d, 2),
-                "var_99_10day": round(var_99_1d * np.sqrt(10), 2),
+                "var_99_10day": var_99_10day,
                 "cvar_expected_shortfall_99": round(cvar_99_1d, 2),
                 "worst_case_historical_loss": round(max_historical_loss, 2),
                 "stress_resilience_rating": "HIGH_RESILIENCE" if max_historical_loss < notional * 0.25 else "MODERATE_RESILIENCE" if max_historical_loss < notional * 0.50 else "SEVERE_VULNERABILITY"
