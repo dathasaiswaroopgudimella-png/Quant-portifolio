@@ -308,6 +308,8 @@ export interface ValidationRunData {
     risk_free_rate: number;
     user_price: number;
     quantlib_price: number;
+    ground_truth_price?: number;
+    benchmark_engine?: string;
     absolute_error: number;
     percentage_error: number;
   };
