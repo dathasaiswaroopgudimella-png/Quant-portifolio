@@ -126,7 +126,7 @@ export default function ValidationDetailPage() {
               </span>
             </div>
             <p className="text-xs font-sans font-medium text-[#908fa0]">
-              Run ID: <span className="text-[#c0c1ff] font-mono">{validation.id}</span> &bull; Asset Class: <span className="text-[#e5e1e4] font-sans font-semibold">{model?.asset_class || "Equity Options"}</span> &bull; Ground Truth Engine: QuantLib 1.43 Analytical
+              Run ID: <span className="text-[#c0c1ff] font-mono">{validation.id}</span> &bull; Model Family: <span className="text-[#e5e1e4] font-sans font-semibold">{report?.report_data?.model_metadata?.name || model?.name || "Quantitative Option Engine"}</span> &bull; Ground Truth Benchmark: <span className="text-[#4edea3] font-semibold">{report?.report_data?.base_metrics?.benchmark_engine || "Analytical Reference Engine"}</span>
             </p>
           </div>
 
@@ -221,6 +221,78 @@ export default function ValidationDetailPage() {
           </div>
         </div>
 
+        {/* Section 1.5: Monte Carlo Statistical Convergence & Confidence Interval Panel */}
+        {report?.report_data?.monte_carlo_diagnostics && (
+          <div className="bg-[#161519] border border-[#2e2c33] rounded-2xl p-6 space-y-4 font-sans">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2e2c33] pb-3 font-sans">
+              <div className="space-y-0.5 font-sans">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-[#e5e1e4] font-sans flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-[#c0c1ff]" />
+                  Monte Carlo Convergence & Confidence Interval Audit
+                </h2>
+                <p className="text-xs text-[#908fa0] font-sans">
+                  Sample Paths: <span className="text-[#e5e1e4] font-mono font-bold">{(report.report_data.monte_carlo_diagnostics.paths || 100000).toLocaleString()}</span> &bull; Time Steps: <span className="text-[#e5e1e4] font-mono font-bold">{report.report_data.monte_carlo_diagnostics.steps || 252}</span> &bull; SDE Discretization: <span className="text-[#4edea3] font-semibold">Euler-Maruyama Full Truncation</span>
+                </p>
+              </div>
+              <span className={`text-xs font-sans px-3 py-1 rounded border font-bold ${
+                report.report_data.monte_carlo_diagnostics.is_benchmark_within_95_ci
+                  ? "bg-[#4edea3]/10 text-[#4edea3] border-[#4edea3]/30"
+                  : "bg-[#ffb95f]/10 text-[#ffb95f] border-[#ffb95f]/30"
+              }`}>
+                {report.report_data.monte_carlo_diagnostics.is_benchmark_within_95_ci ? "✓ BENCHMARK ENVELOPED IN 95% CI" : "⚠ 95% CI DEVIATION"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-sans text-xs">
+              <div className="bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33] space-y-1 font-sans">
+                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">MC Point Estimate (P̂)</span>
+                <div className="text-xl font-bold text-[#c0c1ff] font-mono">${report.report_data.monte_carlo_diagnostics.point_estimate?.toFixed(5)}</div>
+                <span className="text-[10px] text-[#908fa0] block font-sans">Discounted payoff mean</span>
+              </div>
+
+              <div className="bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33] space-y-1 font-sans">
+                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">Semi-Analytical Reference</span>
+                <div className="text-xl font-bold text-[#4edea3] font-mono">${report.report_data.monte_carlo_diagnostics.ground_truth_benchmark?.toFixed(5)}</div>
+                <span className="text-[10px] text-[#908fa0] block font-sans">{report.report_data.model_metadata?.ground_truth_name || "Carr-Madan Integral"}</span>
+              </div>
+
+              <div className="bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33] space-y-1 font-sans">
+                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">Standard Error (SE)</span>
+                <div className="text-xl font-bold text-[#ffb95f] font-mono">&plusmn;${report.report_data.monte_carlo_diagnostics.standard_error?.toFixed(5)}</div>
+                <span className="text-[10px] text-[#908fa0] block font-sans">Relative: {report.report_data.monte_carlo_diagnostics.relative_standard_error_pct}%</span>
+              </div>
+
+              <div className="bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33] space-y-1 font-sans">
+                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">95% Confidence Interval</span>
+                <div className="text-sm font-bold text-[#e5e1e4] font-mono mt-1">
+                  [{report.report_data.monte_carlo_diagnostics.confidence_interval_95?.[0]?.toFixed(4)}, {report.report_data.monte_carlo_diagnostics.confidence_interval_95?.[1]?.toFixed(4)}]
+                </div>
+                <span className="text-[10px] text-[#4edea3] block font-sans">99% CI: [{report.report_data.monte_carlo_diagnostics.confidence_interval_99?.[0]?.toFixed(4)}, {report.report_data.monte_carlo_diagnostics.confidence_interval_99?.[1]?.toFixed(4)}]</span>
+              </div>
+            </div>
+
+            {/* Feller Condition Audit Box */}
+            {report.report_data.monte_carlo_diagnostics.feller_condition_audit && (
+              <div className="p-4 rounded-xl bg-[#0e0e10] border border-[#2e2c33] flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs font-sans">
+                <div className="space-y-1 font-sans">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#c0c1ff] uppercase tracking-wider">Heston Feller Condition Audit:</span>
+                    <span className="font-mono text-[#e5e1e4]">2&kappa;&theta; = {report.report_data.monte_carlo_diagnostics.feller_condition_audit.two_kappa_theta} vs &sigma;ᵥ&sup2; = {report.report_data.monte_carlo_diagnostics.feller_condition_audit.sigma_v_squared}</span>
+                  </div>
+                  <p className="text-[#908fa0] text-[11px] font-sans">{report.report_data.monte_carlo_diagnostics.feller_condition_audit.governance_note}</p>
+                </div>
+                <span className={`px-3 py-1 rounded text-xs font-bold font-sans flex-shrink-0 ${
+                  report.report_data.monte_carlo_diagnostics.feller_condition_audit.is_feller_satisfied
+                    ? "bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30"
+                    : "bg-[#ffb95f]/10 text-[#ffb95f] border border-[#ffb95f]/30"
+                }`}>
+                  {report.report_data.monte_carlo_diagnostics.feller_condition_audit.status}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Section 2: 3D WebGL Fragility Surface Canvas */}
         <FragilitySurface3D
           matrix={surface?.error_matrix}
@@ -261,8 +333,8 @@ export default function ValidationDetailPage() {
               </div>
 
               <div className="bg-[#0e0e10] p-4 rounded-xl border border-[#2e2c33] font-sans">
-                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">QuantLib Ground Truth</span>
-                <div className="text-xl font-bold text-[#4edea3] mt-1 font-mono">${bp.quantlib_price}</div>
+                <span className="text-[10px] text-[#908fa0] uppercase tracking-wider font-sans font-medium">Theoretical Ground Truth</span>
+                <div className="text-xl font-bold text-[#4edea3] mt-1 font-mono">${bp.ground_truth_price || bp.quantlib_price}</div>
               </div>
             </div>
           </div>
@@ -274,7 +346,7 @@ export default function ValidationDetailPage() {
             <div className="flex items-center justify-between border-b border-[#2e2c33] pb-3 font-sans">
               <h2 className="text-sm font-bold uppercase tracking-wider text-[#e5e1e4] font-sans flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#4edea3]" />
-                Analytical Greek Derivatives (QuantLib 1.43 Reference)
+                Theoretical Greek Derivatives ({report?.report_data?.base_metrics?.benchmark_engine || "Analytical Reference"})
               </h2>
             </div>
 

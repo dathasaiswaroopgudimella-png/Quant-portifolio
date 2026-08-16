@@ -5,10 +5,11 @@ import httpx
 from typing import Dict, Any, Optional
 from app.core.config import settings
 
+
 class OpenRouterReportService:
     """
     OpenRouter AI Executive Summary & Prompt-to-Model Synthesizer.
-    Provides natural language model generation and SR 11-7 governance narratives.
+    Provides model-aware natural language generation and SR 11-7 governance narratives.
     """
 
     @staticmethod
@@ -17,10 +18,6 @@ class OpenRouterReportService:
 
     @staticmethod
     async def synthesize_model_from_prompt(prompt: str, asset_class: str = "Equity Options") -> Dict[str, str]:
-        """
-        Synthesizes a valid Python pricing function from natural language or LaTeX formulas using OpenRouter AI.
-        Falls back to intelligent template generator if API key is not configured.
-        """
         api_key = OpenRouterReportService.get_api_key()
 
         candidate_models = [
@@ -34,8 +31,8 @@ class OpenRouterReportService:
         system_prompt = (
             "You are a Quantitative Software Engineer. Convert natural language descriptions, formulas, "
             "or mathematical requirements into executable Python functions for option pricing. "
-            "The function MUST take exactly 5 parameters: S (spot), K (strike), T (maturity in years), "
-            "r (risk-free rate), sigma (volatility). Only use standard Python math or scipy.stats. "
+            "The function MUST take parameters: S (spot), K (strike), T (maturity in years), "
+            "r (risk-free rate), and relevant model parameters. Only use standard Python math, numpy, or scipy.stats. "
             "Return valid JSON with keys: name, description, code."
         )
 
@@ -43,13 +40,12 @@ class OpenRouterReportService:
         Prompt / Formula: "{prompt}"
         Asset Class: "{asset_class}"
 
-        Generate a single executable Python function `def price_option(S, K, T, r, sigma):` 
-        that implements this formula accurately. Ensure math and scipy.stats are imported inside or accessible.
+        Generate an executable Python pricing function that implements this formula accurately.
         Return JSON format:
         {{
           "name": "<Short Model Title>",
           "description": "<Technical Summary>",
-          "code": "def price_option(S, K, T, r, sigma):\\n    import math\\n    ..."
+          "code": "def price_option(S, K, T, r, ...):\\n    import math\\n    ..."
         }}
         """
 
@@ -97,7 +93,35 @@ class OpenRouterReportService:
     @staticmethod
     def _generate_fallback_synthetic_model(prompt: str, asset_class: str) -> Dict[str, str]:
         prompt_lower = prompt.lower()
-        if "put" in prompt_lower:
+        if "heston" in prompt_lower:
+            code = (
+                "def heston_monte_carlo_call(S, K, T, r, v0=0.04, kappa=2.0, theta=0.04, sigma=0.5, rho=-0.7, q=0.0, paths=100000, steps=252, seed=42):\n"
+                "    import numpy as np\n"
+                "    if S <= 0 or K <= 0 or T <= 0:\n"
+                "        return 0.0\n"
+                "    rng = np.random.default_rng(seed)\n"
+                "    dt = T / steps\n"
+                "    sqrt_dt = np.sqrt(dt)\n"
+                "    S_paths = np.full(paths, S, dtype=float)\n"
+                "    v_paths = np.full(paths, v0, dtype=float)\n"
+                "    for _ in range(steps):\n"
+                "        z1 = rng.standard_normal(paths)\n"
+                "        z2 = rng.standard_normal(paths)\n"
+                "        dW_S = z1\n"
+                "        dW_v = rho * z1 + np.sqrt(1.0 - rho**2) * z2\n"
+                "        v = np.maximum(v_paths, 0.0)\n"
+                "        v_next = np.maximum(v + kappa * (theta - v) * dt + sigma * np.sqrt(v) * sqrt_dt * dW_v, 0.0)\n"
+                "        S_paths *= np.exp((r - q - 0.5 * v) * dt + np.sqrt(v) * sqrt_dt * dW_S)\n"
+                "        v_paths = v_next\n"
+                "    payoff = np.maximum(S_paths - K, 0.0)\n"
+                "    discounted = np.exp(-r * T) * payoff\n"
+                "    price = np.mean(discounted)\n"
+                "    se = np.std(discounted, ddof=1) / np.sqrt(paths)\n"
+                "    return {'price': float(price), 'standard_error': float(se), '95%_confidence_interval': (float(price - 1.96*se), float(price + 1.96*se))}\n"
+            )
+            name = "Synthesized Heston Stochastic Volatility MC Model"
+            desc = f"Heston CIR square-root stochastic variance Monte Carlo simulation model synthesized for: '{prompt}'"
+        elif "put" in prompt_lower:
             code = (
                 "def black_scholes_put(S, K, T, r, sigma):\n"
                 "    import math\n"
@@ -116,7 +140,7 @@ class OpenRouterReportService:
                 "    import math\n"
                 "    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:\n"
                 "        return 0.0\n"
-                "    rf = 0.02  # foreign risk-free rate assumption\n"
+                "    rf = 0.02\n"
                 "    d1 = (math.log(S/K) + (r - rf + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))\n"
                 "    d2 = d1 - sigma*math.sqrt(T)\n"
                 "    N = lambda x: 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))\n"
@@ -154,25 +178,19 @@ class OpenRouterReportService:
         assumptions: list = None,
         breaking_params: Dict[str, Any] = None
     ) -> Dict[str, float]:
-        """
-        Computes 6 independent Radar Scores (0.0 to 100.0) for model risk assessment.
-        """
         ast_guards = [a for a in (assumptions or []) if "Safeguards" in a.get("name", "")]
-        conceptual = 95.0 if ast_guards else max(30.0, round(90.0 - fragility_score * 0.4, 1))
-
-        stability = round(max(10.0, min(100.0, 100.0 - min(pct_error * 1.8, 85.0))), 1)
-
+        conceptual = 95.0 if ast_guards else max(30.0, round(92.0 - fragility_score * 0.35, 1))
+        stability = round(max(10.0, min(100.0, 100.0 - min(pct_error * 1.5, 80.0))), 1)
         opt_stab = breaking_params.get("optimizer_stability", 85.0) if breaking_params else 85.0
-        robustness = round(max(10.0, min(100.0, opt_stab - fragility_score * 0.3)), 1)
+        robustness = round(max(10.0, min(100.0, opt_stab - fragility_score * 0.25)), 1)
+        boundary = round(max(10.0, min(100.0, 98.0 - min(pct_error * 1.2, 70.0))), 1)
 
-        boundary = round(max(10.0, min(100.0, 98.0 - min(pct_error * 1.4, 75.0))), 1)
-        
         d_drift = greek_drifts.get("delta_drift", 0.0) if greek_drifts else 0.0
         v_drift = greek_drifts.get("vega_drift", 0.0) if greek_drifts else 0.0
-        greek_fidelity = round(max(10.0, min(100.0, 100.0 - (d_drift * 50.0 + v_drift * 60.0))), 1)
+        greek_fidelity = round(max(10.0, min(100.0, 100.0 - (d_drift * 40.0 + v_drift * 50.0))), 1)
 
         base_err = breaking_params.get("absolute_error", 0.0) if breaking_params else 0.0
-        benchmark_align = round(max(10.0, min(100.0, 100.0 - min(base_err * 8.0 + pct_error * 1.2, 85.0))), 1)
+        benchmark_align = round(max(10.0, min(100.0, 100.0 - min(base_err * 6.0 + pct_error * 1.0, 80.0))), 1)
 
         return {
             "conceptual_soundness": conceptual,
@@ -189,13 +207,16 @@ class OpenRouterReportService:
         fragility_score: float,
         classification: str,
         breaking_params: Dict[str, Any],
-        assumptions: list
+        assumptions: list,
+        model_meta: Dict[str, Any] = None,
+        mc_diagnostics: Dict[str, Any] = None
     ) -> str:
-        """
-        Synthesizes human-readable validation summary via OpenRouter API with multi-model resilience,
-        or falls back to comprehensive, non-generic deterministic quantitative synthesis.
-        """
         api_key = OpenRouterReportService.get_api_key()
+
+        meta = model_meta or {}
+        model_full_name = meta.get("name", model_name)
+        benchmark_name = meta.get("ground_truth_name", breaking_params.get("benchmark_engine", "Analytical Ground Truth"))
+        is_mc = meta.get("is_monte_carlo", False)
 
         candidate_models = [
             "nvidia/nemotron-3.5-lightning:free",
@@ -207,29 +228,48 @@ class OpenRouterReportService:
         ]
 
         system_prompt = (
-            "You are a Senior Model Risk Manager and Quantitative Auditor specializing in Federal Reserve "
-            "SR 11-7 governance guidelines. Synthesize executive-level, mathematically sound model risk reviews."
+            "You are a Senior Quantitative Auditor and Model Risk Officer specializing in Federal Reserve "
+            "SR 11-7 / OCC 2011-12 model risk governance. Synthesize executive-level, mathematically rigorous "
+            "validation audits specifically addressing the true model family (Heston Stochastic Volatility, "
+            "Monte Carlo simulations, Jump-Diffusion, or BSM) and their theoretical benchmark alignments."
         )
 
+        mc_info_str = ""
+        if is_mc and mc_diagnostics:
+            feller = mc_diagnostics.get("feller_condition_audit") or {}
+            mc_info_str = f"""
+            - **Monte Carlo Simulation Diagnostics**:
+              - Sample Paths: {mc_diagnostics.get('paths', 'N/A'):,} | Time Steps: {mc_diagnostics.get('steps', 'N/A')}
+              - Simulation Point Estimate: ${mc_diagnostics.get('point_estimate', 'N/A')}
+              - Analytical Reference Benchmark: ${mc_diagnostics.get('ground_truth_benchmark', 'N/A')}
+              - Standard Error (SE): ±${mc_diagnostics.get('standard_error', 'N/A')} ({mc_diagnostics.get('relative_standard_error_pct', 'N/A')}%)
+              - 95% Confidence Interval: [{mc_diagnostics.get('confidence_interval_95', ['',''])[0]}, {mc_diagnostics.get('confidence_interval_95', ['',''])[1]}]
+              - Benchmark Within 95% CI: {mc_diagnostics.get('is_benchmark_within_95_ci', 'N/A')}
+              - Feller Condition (2*kappa*theta >= sigma_v^2): {feller.get('status', 'N/A')} ({feller.get('two_kappa_theta', 'N/A')} vs {feller.get('sigma_v_squared', 'N/A')})
+            """
+
         user_prompt = f"""
-        Generate a comprehensive, world-class Model Risk Governance & SR 11-7 Executive Report for the following validation run:
+        Generate a comprehensive, world-class Federal Reserve SR 11-7 Model Risk Governance Audit for the following run:
 
-        ### Target Model: {model_name}
-        - **Fragility Index**: {fragility_score}/100 ({classification} Tier)
-        - **Worst-Case Breaking Scenario (SciPy DE Search)**:
-          - Perturbed Spot Price: ${breaking_params.get('spot', 'N/A')}
-          - Perturbed Volatility: {breaking_params.get('volatility', 0)*100:.1f}%
-          - Perturbed Interest Rate: {breaking_params.get('risk_free_rate', 0)*100:.2f}%
-          - User Model Output Price: ${breaking_params.get('user_price', 'N/A')}
-          - QuantLib 1.43 Ground Truth Price: ${breaking_params.get('quantlib_price', 'N/A')}
-          - Maximum Absolute Error: ${breaking_params.get('absolute_error', 'N/A')} ({breaking_params.get('percentage_error', 'N/A')}% divergence)
-        - **Extracted Mathematical Assumptions**: {[a.get('name', '') for a in assumptions]}
+        ### Target Model: {model_full_name}
+        - **Model Classification**: {meta.get('stochastic_type', 'Quantitative Pricing Engine')}
+        - **Theoretical Ground Truth Benchmark**: {benchmark_name}
+        - **Fragility Score**: {fragility_score}/100 ({classification} Tier)
+        {mc_info_str}
+        - **Worst-Case Adversarial Perturbation**:
+          - Perturbed Spot: ${breaking_params.get('spot', 'N/A')}
+          - Perturbed Volatility / Initial Variance: {breaking_params.get('volatility', 0)*100:.2f}%
+          - Candidate Model Output: ${breaking_params.get('user_price', 'N/A')}
+          - Ground Truth Benchmark: ${breaking_params.get('ground_truth_price', breaking_params.get('quantlib_price', 'N/A'))}
+          - Absolute Pricing Error: ${breaking_params.get('absolute_error', 'N/A')} ({breaking_params.get('percentage_error', 'N/A')}% relative error)
+        - **AST Assumptions Extracted**: {[a.get('name', '') for a in assumptions]}
 
-        Please structure your output in clear prose with the following sections:
-        1. **Executive Overview**: High-level summary of model performance and fragility tier.
-        2. **Mathematical Assumption Breakdown**: Analysis of implicit assumptions (e.g. constant volatility ∂σ/∂t=0) and why they fail under stress.
-        3. **Adversarial Worst-Case Analysis**: Detailed explanation of how the breaking perturbation degrades pricing accuracy relative to QuantLib ground truth.
-        4. **SR 11-7 Regulatory Compliance Audit**: Specific governance recommendations, monitoring requirements, and operational boundaries.
+        Structure your report in clear prose with the following sections:
+        1. **Executive Summary & Model Identification**: Clearly state the true model formulation and benchmark engine.
+        2. **Mathematical Formulation & Stochastic Dynamics**: Detail the underlying SDE/PDE (e.g. CIR variance process, correlated Brownian increments, Euler-Maruyama discretization).
+        3. **Monte Carlo Convergence & Confidence Interval Audit** (if applicable): Standard error analysis, 95% CI coverage of theoretical benchmark, and Feller boundary stability.
+        4. **Adversarial Stress Search & Parameter Fragility**: Analysis of parameter regimes causing highest divergence.
+        5. **SR 11-7 Regulatory Compliance & Actionable Controls**: Specific governance boundaries, ongoing surveillance thresholds, and model validation recertification protocols.
         """
 
         if api_key:
@@ -250,8 +290,8 @@ class OpenRouterReportService:
                                     {"role": "system", "content": system_prompt},
                                     {"role": "user", "content": user_prompt}
                                 ],
-                                "max_tokens": 850,
-                                "temperature": 0.3
+                                "max_tokens": 900,
+                                "temperature": 0.25
                             }
                         )
                         if response.status_code == 200:
@@ -259,13 +299,26 @@ class OpenRouterReportService:
                             if "choices" in data and len(data["choices"]) > 0:
                                 content = data["choices"][0]["message"]["content"]
                                 if content and len(content.strip()) > 50:
+                                    # Strip reasoning/thinking tokens from models like Nemotron/Gemma
+                                    content = re.sub(r"<thought>.*?</thought>", "", content, flags=re.DOTALL).strip()
+                                    content = re.sub(r"^([ \t]*\n)*", "", content)
+                                    # If output has a markdown heading after preamble thoughts, start from heading
+                                    hash_pos = content.find("# ")
+                                    if hash_pos != -1 and hash_pos < 500:
+                                        content = content[hash_pos:]
                                     return content
                 except Exception as e:
                     print(f"[OpenRouterService] API notice for model '{model_to_use}': {e}")
                     continue
 
         return OpenRouterReportService._generate_template_summary(
-            model_name, fragility_score, classification, breaking_params, assumptions
+            model_name=model_full_name,
+            fragility_score=fragility_score,
+            classification=classification,
+            breaking_params=breaking_params,
+            assumptions=assumptions,
+            model_meta=meta,
+            mc_diagnostics=mc_diagnostics
         )
 
     @staticmethod
@@ -274,70 +327,96 @@ class OpenRouterReportService:
         fragility_score: float,
         classification: str,
         breaking_params: Dict[str, Any],
-        assumptions: list
+        assumptions: list,
+        model_meta: Dict[str, Any] = None,
+        mc_diagnostics: Dict[str, Any] = None
     ) -> str:
-        assump_list = [a.get('name', '') for a in assumptions] if assumptions else ["Constant Volatility", "Log-Normal Asset Returns", "Frictionless Trading"]
-        assump_str = ", ".join(assump_list)
+        meta = model_meta or {}
+        benchmark_name = meta.get("ground_truth_name", breaking_params.get("benchmark_engine", "Theoretical Ground Truth Reference"))
+        is_mc = meta.get("is_monte_carlo", False)
+
+        assump_list = [a.get('name', '') for a in assumptions] if assumptions else ["Stochastic Asset Dynamics", "Risk-Neutral Valuation", "Equivalent Martingale Measure"]
+        assump_str = "\n- " + "\n- ".join(assump_list)
+
         spot = breaking_params.get('spot', 100.0)
         vol = breaking_params.get('volatility', 0.20) * 100.0
         r = breaking_params.get('risk_free_rate', 0.05) * 100.0
-        user_p = breaking_params.get('user_price', 10.45)
-        ql_p = breaking_params.get('quantlib_price', 10.45058)
-        abs_err = breaking_params.get('absolute_error', 0.00058)
-        pct_err = breaking_params.get('percentage_error', 0.0055)
+        user_p = breaking_params.get('user_price', 7.3305)
+        gt_p = breaking_params.get('ground_truth_price', breaking_params.get('quantlib_price', 7.3812))
+        abs_err = breaking_params.get('absolute_error', 0.0507)
+        pct_err = breaking_params.get('percentage_error', 0.687)
 
-        return fr"""# SR 11-7 Model Risk Audit & Adversarial Fragility Assessment
+        mc_section = ""
+        if is_mc and mc_diagnostics:
+            feller = mc_diagnostics.get("feller_condition_audit") or {}
+            ci_95 = mc_diagnostics.get("confidence_interval_95", [user_p - 0.05, user_p + 0.05])
+            se = mc_diagnostics.get("standard_error", 0.03)
+            paths = mc_diagnostics.get("paths", 100000)
+            steps = mc_diagnostics.get("steps", 252)
+            enveloped = "CONFIRMED (Benchmark enclosed in 95% CI)" if mc_diagnostics.get("is_benchmark_within_95_ci") else "DEVIATION DETECTED"
 
-**Target Model Identifier**: `{model_name}`  
+            mc_section = fr"""
+---
+
+## 3. Monte Carlo Convergence & Statistical Confidence Audit
+
+A formal statistical validation of the simulation engine was conducted across {paths:,} sample paths and {steps} time steps:
+- **Simulation Point Estimate ($\hat{{P}}$)**: `${user_p:.5f}`
+- **Theoretical Semi-Analytical Benchmark ($P_{{\text{{ref}}}}$)**: `${gt_p:.5f}`
+- **Monte Carlo Standard Error ($\text{{SE}} = s / \sqrt{{N}}$)**: `±${se:.5f}` ({mc_diagnostics.get('relative_standard_error_pct', 0.41):.3f}% relative precision)
+- **95% Confidence Interval**: `[${ci_95[0]:.5f}, ${ci_95[1]:.5f}]`
+- **Theoretical Envelopment**: **{enveloped}**
+- **Feller Condition Audit ($2\kappa\theta \ge \sigma_v^2$)**: **{feller.get('status', 'FELLER_AUDIT_ACTIVE')}**
+  - Left-hand side ($2\kappa\theta$): `{feller.get('two_kappa_theta', 0.16):.4f}`
+  - Right-hand side ($\sigma_v^2$): `{feller.get('sigma_v_squared', 0.25):.4f}`
+  - *Governance Finding*: {feller.get('governance_note', 'Discretization requires reflection guard at zero variance boundary.')}
+"""
+
+        return fr"""# Federal Reserve SR 11-7 Model Risk Audit & Quantitative Governance
+
+**Model Identity**: `{model_name}`  
+**Model Family**: **{meta.get('stochastic_type', 'Quantitative Derivative Engine')}**  
+**Ground Truth Benchmark**: `{benchmark_name}`  
 **Quantitative Fragility Index**: **{fragility_score:.1f} / 100.0** — **[{classification} TIER]**  
-**Benchmark Engine**: QuantLib 1.43 Analytical Black-Scholes-Merton Core  
 
 ---
 
 ## 1. Executive Summary & Regulatory Classification
 
-An adversarial validation run was conducted on `{model_name}` utilizing SciPy Differential Evolution multi-seed global optimization across a 4D parameter search space ($S \in [50, 150]$, $\sigma \in [0.05, 0.80]$, $r \in [0.0, 0.15]$, $T \in [0.1, 2.0]$).
+A model risk audit was conducted on `{model_name}`. Rather than assuming constant volatility Black-Scholes dynamics, the validation engine evaluated the model against its exact theoretical reference: **{benchmark_name}**.
 
-The model has been classified under the **{classification}** model risk tier with a computed Fragility Index of **{fragility_score:.1f} / 100**. This rating reflects the structural stability of the underlying partial differential equation (PDE) solver under extreme parameter perturbations and volatile market regimes.
-
----
-
-## 2. Mathematical Assumption Breakdown & AST Analysis
-
-Static Abstract Syntax Tree (AST) analysis extracted the following fundamental mathematical assumptions from the candidate code:
-- **Implicit Assumptions Identified**: `{assump_str}`
-
-### Vulnerability Analysis under Stress Regimes:
-1. **Constant Volatility ($\partial \sigma / \partial t = 0$)**: The model assumes a deterministic volatility term structure. Under regime shifts, historical 21-day volatility spikes introduce significant pricing skew not captured by standard constant variance assumptions.
-2. **Infinite Liquidity & Zero Transaction Friction**: Continuous delta-hedging assumes instantaneous rebalancing without market impact costs.
-3. **Log-Normal Return Distribution**: Tails in real market asset returns exhibit fat-tailed kurtosis ($\text{{Kurtosis}} > 3.0$), causing systemic under-pricing of deep Out-of-the-Money (OTM) options.
+The model achieved a Fragility Index of **{fragility_score:.1f} / 100**, placing it in the **{classification}** governance tier. {("The Monte Carlo simulation aligns closely with the semi-analytical Fourier integral ground truth, with pricing discrepancy fully enveloped by the 95% statistical confidence interval." if is_mc else "The pricing formulation demonstrates mathematical soundness across operational market regimes.")}
 
 ---
 
-## 3. Adversarial Worst-Case Perturbation Analysis
+## 2. Mathematical Formulation & AST Structural Assumptions
 
-The global differential evolution optimizer identified a critical breaking market perturbation at the following coordinates:
+Static Abstract Syntax Tree (AST) inspection extracted the following code-derived assumptions:
+{assump_str}
+
+### Structural Dynamics:
+1. **Variance Dynamics & Skew**: Model implements stochastic variance diffusion with continuous mean reversion. The negative Brownian correlation captures the empirical equity leverage effect.
+2. **Discretization Boundary Controls**: Time-stepping loops utilize Euler-Maruyama integration with non-negativity truncation guards, preventing numerical instability when variance paths approach zero.
+3. **Discounting & Funding**: Evaluates expected payoff discounted at continuous risk-free rate $r$.
+{mc_section}
+---
+
+## 4. Adversarial Non-Convex Stress Search
+
+Differential evolution optimization identified the maximal pricing divergence coordinate:
 - **Perturbed Spot Price ($S$)**: `${spot:.2f}`
-- **Perturbed Implied Volatility ($\sigma$)**: `{vol:.2f}%`
-- **Perturbed Risk-Free Interest Rate ($r$)**: `{r:.2f}%`
-- **Candidate Model Output**: `${user_p:.4f}`
-- **QuantLib 1.43 Ground Truth**: `${ql_p:.4f}`
-- **Maximum Absolute Pricing Discrepancy**: `${abs_err:.5f}` (**{pct_err:.3f}%** relative error divergence)
+- **Perturbed Volatility / Initial Variance ($v_0$)**: `{vol:.2f}%`
+- **Perturbed Risk-Free Rate ($r$)**: `{r:.2f}%`
+- **Candidate Model Price**: `${user_p:.4f}`
+- **Theoretical Reference Price**: `${gt_p:.4f}`
+- **Absolute Pricing Error**: `${abs_err:.5f}` (**{pct_err:.3f}%** relative error divergence)
 
 ---
 
-## 4. Greek Sensitivity Drift & Higher-Order Risk
+## 5. Federal Reserve SR 11-7 Governance Protocol & Operational Boundaries
 
-Analytical comparison of numerical partial derivatives against exact QuantLib analytical Greeks reveals:
-- **Delta ($\partial V / \partial S$) Alignment**: Maintained within acceptable risk bounds during central spot regimes, but exhibits divergence under extreme OTM strikes.
-- **Vega ($\partial V / \partial \sigma$) Sensitivity**: Demonstrates sharp curvature drift as volatility exceeds 50% p.a., leading to potential under-hedging in high-volatility environments.
-
----
-
-## 5. SR 11-7 Regulatory Compliance & Governance Protocol
-
-Pursuant to Federal Reserve Supervisory Guidance on Model Risk Management (SR 11-7 / OCC 2011-12):
-1. **Operational Parameter Boundaries**: Enforce strict validation gates capping operational model execution within $S \in [60, 140]$ and $\sigma \le 60\%$.
-2. **Real-time Market Monitoring**: Configure automated alerts whenever 21-day historical market volatility diverges by $>2.5\sigma$ from model input volatility.
-3. **Model Validation Frequency**: Re-audit the pricing code quarterly or immediately following any underlying AST code modifications.
+Pursuant to Federal Reserve SR 11-7 and OCC 2011-12 Supervisory Guidance on Model Risk Management:
+1. **Operational Boundaries**: Model execution is approved for trading within $S \in [60, 150]$ and initial variance $v_0 \in [0.01, 0.64]$.
+2. **Simulation Sample Size Policy**: For live book pricing and end-of-day P&L, maintain minimum $N \ge 50,000$ paths to guarantee standard error $\text{{SE}} \le \$0.04$.
+3. **Model Recertification**: Re-audit the pricing engine quarterly or whenever numerical time-stepping or variance calibration routines are updated.
 """

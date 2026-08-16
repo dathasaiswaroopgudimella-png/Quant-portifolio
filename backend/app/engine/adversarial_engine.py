@@ -23,13 +23,15 @@ except ImportError:
     HAS_QL = False
 
 from app.engine.quantlib_pricer import QuantLibPricer
-from app.engine.sandbox import SandboxedModelEvaluator
+from app.engine.sandbox import SandboxedModelEvaluator, _extract_numeric_price
+from app.engine.model_classifier import ModelClassifier, ModelBenchmarkRouter, ModelFamily
+
 
 class AdversarialEngine:
     """
     Adversarial Search Engine powered by SciPy Non-Convex Differential Evolution.
-    Finds minimal realistic market parameter perturbations (Spot, Volatility, Interest Rate, Tenor)
-    that maximize pricing discrepancy and Greek divergence between user model and QuantLib ground truth.
+    Finds minimal realistic market parameter perturbations that maximize pricing discrepancy
+    and Greek divergence between user model and its exact theoretical/analytical benchmark.
     """
 
     @staticmethod
@@ -44,19 +46,26 @@ class AdversarialEngine:
         option_type: str = "call"
     ) -> Dict[str, Any]:
         """
-        Executes 4D SciPy Differential Evolution over parameter bounds (Spot, Vol, Rate, Maturity).
-        Uses scale-relative pricing error objective to ensure equal sensitivity across deep ITM and OTM options.
+        Executes 4D SciPy Differential Evolution over parameter bounds.
+        Automatically uses the model-appropriate ground truth (Heston Fourier Inversion for Heston,
+        Merton Series for Jump-Diffusion, QuantLib Analytical for BSM).
         """
-        ql_base = QuantLibPricer.price_european_option(
+        model_meta = ModelClassifier.classify_model(model_code)
+        family = model_meta["family"]
+
+        # Calculate exact model-aware ground truth benchmark
+        gt_base = ModelBenchmarkRouter.calculate_ground_truth(
+            model_family=family,
             spot=base_spot,
             strike=base_strike,
-            maturity_years=base_maturity,
-            risk_free_rate=base_rate,
+            maturity=base_maturity,
+            rate=base_rate,
             volatility=base_volatility,
             dividend_yield=dividend_yield,
-            option_type=option_type
+            option_type=option_type,
+            extra_params=model_meta.get("default_parameters", {})
         )
-        ql_base_price = float(ql_base["price"])
+        gt_base_price = float(gt_base["price"])
 
         user_fn_full = SandboxedModelEvaluator.create_executable_callable(model_code, fast_mode=False)
         user_fn_fast = SandboxedModelEvaluator.create_executable_callable(model_code, fast_mode=True)
@@ -70,9 +79,9 @@ class AdversarialEngine:
                 volatility=base_volatility
             ))
         except Exception:
-            user_base_price = ql_base_price
+            user_base_price = gt_base_price
 
-        # 4D Search bounds:
+        # Search bounds:
         # 1. Spot: [0.60x, 1.40x]
         # 2. Volatility: [0.40x, 3.00x]
         # 3. Interest Rate: [max(0.001, rate-0.04), rate+0.06]
@@ -91,16 +100,18 @@ class AdversarialEngine:
             curr_rate = float(max(0.001, rate_val))
             curr_mat = float(max(0.05, maturity_val))
 
-            ql_res = QuantLibPricer.price_european_option(
+            gt_res = ModelBenchmarkRouter.calculate_ground_truth(
+                model_family=family,
                 spot=curr_spot,
                 strike=base_strike,
-                maturity_years=curr_mat,
-                risk_free_rate=curr_rate,
+                maturity=curr_mat,
+                rate=curr_rate,
                 volatility=curr_vol,
                 dividend_yield=dividend_yield,
-                option_type=option_type
+                option_type=option_type,
+                extra_params=model_meta.get("default_parameters", {})
             )
-            ql_p = float(ql_res["price"])
+            gt_p = float(gt_res["price"])
 
             try:
                 user_p = float(user_fn_fast(
@@ -114,13 +125,12 @@ class AdversarialEngine:
                 user_p = 0.0
 
             # Scale-relative pricing error objective:
-            # Floor set to 0.5% of current spot price so deep OTM options are evaluated scale-proportionally.
-            abs_err = abs(user_p - ql_p)
-            scale_floor = max(ql_p, curr_spot * 0.005)
+            abs_err = abs(user_p - gt_p)
+            scale_floor = max(gt_p, curr_spot * 0.005)
             rel_err = abs_err / scale_floor
             return -rel_err  # Maximize relative error
 
-        # Multi-seed Differential Evolution for statistical confidence bounds (Seeds 42, 101, 2024)
+        # Multi-seed Differential Evolution for statistical confidence bounds
         seeds = [42, 101, 2024]
         seed_results = []
 
@@ -130,14 +140,13 @@ class AdversarialEngine:
                     _objective,
                     bounds=bounds,
                     strategy='best1bin',
-                    maxiter=35,
-                    popsize=15,
-                    tol=1e-5,
+                    maxiter=25,
+                    popsize=12,
+                    tol=1e-4,
                     seed=seed_val
                 )
                 seed_results.append(res)
         else:
-            # Pure-Python 3-point grid search fallback (Vercel serverless)
             import math, random
             _rng = random.Random(42)
             class _FallbackResult:
@@ -147,8 +156,7 @@ class AdversarialEngine:
             best_x, best_val = [0.9, 1.5, bounds[2][0] + (bounds[2][1]-bounds[2][0])*0.5, base_maturity], 0.0
             for seed_val in seeds:
                 _rng.seed(seed_val)
-                # Evaluate 27 random candidates per seed
-                for _ in range(27):
+                for _ in range(25):
                     candidate = [_rng.uniform(b[0], b[1]) for b in bounds]
                     val = -_objective(candidate)
                     if val > best_val:
@@ -164,17 +172,29 @@ class AdversarialEngine:
         opt_rate = float(opt_rate)
         opt_maturity = float(opt_maturity)
 
-        # Evaluate QuantLib ground truth at adversarial point
-        ql_worst = QuantLibPricer.price_european_option(
+        # Evaluate model-aware ground truth at adversarial point
+        gt_worst = ModelBenchmarkRouter.calculate_ground_truth(
+            model_family=family,
             spot=opt_spot,
             strike=base_strike,
             maturity_years=opt_maturity,
             risk_free_rate=opt_rate,
             volatility=opt_vol,
             dividend_yield=dividend_yield,
-            option_type=option_type
+            option_type=option_type,
+            extra_params=model_meta.get("default_parameters", {})
+        ) if "maturity_years" in ModelBenchmarkRouter.calculate_ground_truth.__code__.co_varnames else ModelBenchmarkRouter.calculate_ground_truth(
+            model_family=family,
+            spot=opt_spot,
+            strike=base_strike,
+            maturity=opt_maturity,
+            rate=opt_rate,
+            volatility=opt_vol,
+            dividend_yield=dividend_yield,
+            option_type=option_type,
+            extra_params=model_meta.get("default_parameters", {})
         )
-        ql_worst_price = float(ql_worst["price"])
+        gt_worst_price = float(gt_worst["price"])
 
         try:
             user_worst_price = float(user_fn_full(
@@ -187,8 +207,8 @@ class AdversarialEngine:
         except Exception:
             user_worst_price = 0.0
 
-        max_error = float(abs(user_worst_price - ql_worst_price))
-        scale_floor_worst = max(ql_worst_price, opt_spot * 0.005)
+        max_error = float(abs(user_worst_price - gt_worst_price))
+        scale_floor_worst = max(gt_worst_price, opt_spot * 0.005)
         pct_error = float((max_error / scale_floor_worst) * 100.0)
 
         # Numerical finite-difference Greek drift estimation for user model at breaking point
@@ -200,21 +220,21 @@ class AdversarialEngine:
             u_p_s_dn = user_fn_full(opt_spot - h_s, base_strike, opt_maturity, opt_rate, opt_vol)
             user_delta = (u_p_s_up - u_p_s_dn) / (2.0 * h_s)
         except Exception:
-            user_delta = ql_worst["greeks"]["delta"]
+            user_delta = gt_worst["greeks"].get("delta", 0.5)
 
         try:
             u_p_v_up = user_fn_full(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol + h_v)
             u_p_v_dn = user_fn_full(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol - h_v)
             user_vega_unit = (u_p_v_up - u_p_v_dn) / (2.0 * h_v)
-            user_vega = user_vega_unit / 100.0  # convert to per-1%-vol-point (market convention)
+            user_vega = user_vega_unit / 100.0
         except Exception:
-            user_vega = ql_worst["greeks"]["vega"]
+            user_vega = gt_worst["greeks"].get("vega", 0.2)
 
         greek_drifts = {
-            "delta_drift": round(float(abs(user_delta - ql_worst["greeks"]["delta"])), 4),
-            "vega_drift": round(float(abs(user_vega - ql_worst["greeks"]["vega"])), 4),
-            "base_greeks": ql_base["greeks"],
-            "adversarial_greeks": ql_worst["greeks"]
+            "delta_drift": round(float(abs(user_delta - gt_worst["greeks"].get("delta", user_delta))), 4),
+            "vega_drift": round(float(abs(user_vega - gt_worst["greeks"].get("vega", user_vega))), 4),
+            "base_greeks": gt_base["greeks"],
+            "adversarial_greeks": gt_worst["greeks"]
         }
 
         # Multi-seed statistical confidence calculation
@@ -234,7 +254,9 @@ class AdversarialEngine:
             "risk_free_rate": round(float(opt_rate), 4),
             "maturity_years": round(float(opt_maturity), 3),
             "user_price": round(float(user_worst_price), 4),
-            "quantlib_price": round(float(ql_worst_price), 4),
+            "quantlib_price": round(float(gt_worst_price), 4),
+            "ground_truth_price": round(float(gt_worst_price), 4),
+            "benchmark_engine": gt_worst["benchmark_engine"],
             "absolute_error": round(float(max_error), 4),
             "percentage_error": round(float(pct_error), 2),
             "optimizer_stability": stability_score,
@@ -246,12 +268,10 @@ class AdversarialEngine:
             "reproducibility": {
                 "seeds_evaluated": seeds,
                 "strategy": "best1bin",
-                "maxiter": 35,
-                "popsize": 15,
+                "maxiter": 25,
+                "popsize": 12,
                 "environment_metadata": {
-                    "quantlib_version": getattr(ql, "__version__", "1.43") if ql else "fallback",
-                    "scipy_version": __import__("scipy").__version__ if HAS_SCIPY else "fallback",
-                    "numpy_version": np.__version__ if HAS_NUMPY else "fallback",
+                    "benchmark_engine": gt_worst["benchmark_engine"],
                     "python_version": sys.version.split()[0]
                 }
             }
@@ -259,21 +279,27 @@ class AdversarialEngine:
 
         surface_grid = AdversarialEngine._generate_fragility_surface(
             user_fn=user_fn_fast,
+            model_family=family,
             base_spot=base_spot,
             base_strike=base_strike,
             base_maturity=base_maturity,
             base_rate=base_rate,
             base_volatility=base_volatility,
             dividend_yield=dividend_yield,
-            option_type=option_type
+            option_type=option_type,
+            extra_params=model_meta.get("default_parameters", {})
         )
 
         return {
+            "model_metadata": model_meta,
             "base_metrics": {
                 "user_price": round(float(user_base_price), 4),
-                "quantlib_price": round(float(ql_base_price), 4),
-                "base_error": round(float(abs(user_base_price - ql_base_price)), 4),
-                "base_greeks": ql_base["greeks"]
+                "quantlib_price": round(float(gt_base_price), 4),
+                "ground_truth_price": round(float(gt_base_price), 4),
+                "benchmark_engine": gt_base["benchmark_engine"],
+                "base_error": round(float(abs(user_base_price - gt_base_price)), 4),
+                "base_greeks": gt_base["greeks"],
+                "stochastic_parameters": gt_base.get("stochastic_parameters", {})
             },
             "breaking_parameters": breaking_parameters,
             "greek_drifts": greek_drifts,
@@ -283,13 +309,15 @@ class AdversarialEngine:
     @staticmethod
     def _generate_fragility_surface(
         user_fn: Any,
+        model_family: str,
         base_spot: float,
         base_strike: float,
         base_maturity: float,
         base_rate: float,
         base_volatility: float,
         dividend_yield: float = 0.0,
-        option_type: str = "call"
+        option_type: str = "call",
+        extra_params: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         if HAS_NUMPY and np is not None:
             spot_multipliers = np.linspace(0.70, 1.30, 7)
@@ -304,29 +332,31 @@ class AdversarialEngine:
             curr_vol = float(base_volatility * v_mult)
             for s_mult in spot_multipliers:
                 curr_spot = float(base_spot * s_mult)
-                ql_res = QuantLibPricer.price_european_option(
+                gt_res = ModelBenchmarkRouter.calculate_ground_truth(
+                    model_family=model_family,
                     spot=curr_spot,
                     strike=base_strike,
-                    maturity_years=base_maturity,
-                    risk_free_rate=base_rate,
+                    maturity=base_maturity,
+                    rate=base_rate,
                     volatility=curr_vol,
                     dividend_yield=dividend_yield,
-                    option_type=option_type
+                    option_type=option_type,
+                    extra_params=extra_params
                 )
-                ql_p = float(ql_res["price"])
+                gt_p = float(gt_res["price"])
 
                 try:
                     user_p = float(user_fn(
                         spot=curr_spot,
                         strike=base_strike,
                         maturity=base_maturity,
-                        rate=base_rate,   # surface is Spot×Vol 2D slice at base_rate
+                        rate=base_rate,
                         volatility=curr_vol
                     ))
                 except Exception:
                     user_p = 0.0
 
-                err = float(abs(user_p - ql_p))
+                err = float(abs(user_p - gt_p))
                 row.append(round(err, 4))
             matrix.append(row)
 

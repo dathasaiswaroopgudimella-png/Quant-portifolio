@@ -43,6 +43,13 @@ async def create_validation_run(
     sr11_7_payload = pipeline_res["sr11_7_payload"]
     report_payload = pipeline_res["report_payload"]
 
+    model_meta = pipeline_res.get("model_metadata", {})
+    if model_meta.get("name") and ("Synthesized" in model.name or "Option Model" in model.name or "Custom" in model.name or "Financial Option" in model.name or "Black-Scholes" in model.name):
+        model.name = model_meta["name"]
+        if model_meta.get("stochastic_type"):
+            model.description = f"{model_meta['name']} — {model_meta.get('governance_standard', '')}"
+            model.asset_class = model_meta.get("stochastic_type", model.asset_class)
+
     # Save ValidationRun
     val_run = ValidationRun(
         model_id=model.id,
