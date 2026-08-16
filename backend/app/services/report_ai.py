@@ -24,11 +24,12 @@ class OpenRouterReportService:
         api_key = OpenRouterReportService.get_api_key()
 
         candidate_models = [
-            "google/gemma-4-26b-a4b-it:free",
-            "google/gemma-4-31b-it:free",
             "nvidia/nemotron-3.5-lightning:free",
+            "google/gemma-4-26b-a4b-it:free",
+            "liquid/lfm-2.5-2.6b:free",
+            "cohere/north-mini-code:free",
+            "openrouter/free",
             os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
-            "openai/gpt-4o-mini",
         ]
         system_prompt = (
             "You are a Quantitative Software Engineer. Convert natural language descriptions, formulas, "
@@ -197,11 +198,12 @@ class OpenRouterReportService:
         api_key = OpenRouterReportService.get_api_key()
 
         candidate_models = [
-            "google/gemma-4-26b-a4b-it:free",
-            "google/gemma-4-31b-it:free",
             "nvidia/nemotron-3.5-lightning:free",
+            "google/gemma-4-26b-a4b-it:free",
+            "liquid/lfm-2.5-2.6b:free",
+            "cohere/north-mini-code:free",
+            "openrouter/free",
             os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
-            "openai/gpt-4o-mini",
         ]
 
         system_prompt = (
@@ -284,7 +286,7 @@ class OpenRouterReportService:
         abs_err = breaking_params.get('absolute_error', 0.00058)
         pct_err = breaking_params.get('percentage_error', 0.0055)
 
-        return f"""# SR 11-7 Model Risk Audit & Adversarial Fragility Assessment
+        return fr"""# SR 11-7 Model Risk Audit & Adversarial Fragility Assessment
 
 **Target Model Identifier**: `{model_name}`  
 **Quantitative Fragility Index**: **{fragility_score:.1f} / 100.0** — **[{classification} TIER]**  

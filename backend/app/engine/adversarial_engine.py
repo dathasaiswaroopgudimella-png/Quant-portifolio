@@ -58,10 +58,11 @@ class AdversarialEngine:
         )
         ql_base_price = float(ql_base["price"])
 
-        user_fn = SandboxedModelEvaluator.create_executable_callable(model_code)
+        user_fn_full = SandboxedModelEvaluator.create_executable_callable(model_code, fast_mode=False)
+        user_fn_fast = SandboxedModelEvaluator.create_executable_callable(model_code, fast_mode=True)
 
         try:
-            user_base_price = float(user_fn(
+            user_base_price = float(user_fn_full(
                 spot=base_spot,
                 strike=base_strike,
                 maturity=base_maturity,
@@ -102,7 +103,7 @@ class AdversarialEngine:
             ql_p = float(ql_res["price"])
 
             try:
-                user_p = float(user_fn(
+                user_p = float(user_fn_fast(
                     spot=curr_spot,
                     strike=base_strike,
                     maturity=curr_mat,
@@ -176,7 +177,7 @@ class AdversarialEngine:
         ql_worst_price = float(ql_worst["price"])
 
         try:
-            user_worst_price = float(user_fn(
+            user_worst_price = float(user_fn_full(
                 spot=opt_spot,
                 strike=base_strike,
                 maturity=opt_maturity,
@@ -195,18 +196,15 @@ class AdversarialEngine:
         h_v = max(opt_vol * 0.001, 0.001)
 
         try:
-            u_p_s_up = user_fn(opt_spot + h_s, base_strike, opt_maturity, opt_rate, opt_vol)
-            u_p_s_dn = user_fn(opt_spot - h_s, base_strike, opt_maturity, opt_rate, opt_vol)
+            u_p_s_up = user_fn_full(opt_spot + h_s, base_strike, opt_maturity, opt_rate, opt_vol)
+            u_p_s_dn = user_fn_full(opt_spot - h_s, base_strike, opt_maturity, opt_rate, opt_vol)
             user_delta = (u_p_s_up - u_p_s_dn) / (2.0 * h_s)
         except Exception:
             user_delta = ql_worst["greeks"]["delta"]
 
         try:
-            u_p_v_up = user_fn(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol + h_v)
-            u_p_v_dn = user_fn(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol - h_v)
-            # FD vega per unit vol change (Δσ=1.0) — same convention as QuantLib vega_unit.
-            # QuantLib stores vega_unit (per unit move) in greeks["vega_unit"] but exposes vega_1pct
-            # as greeks["vega"]. Use vega_unit for consistent comparison.
+            u_p_v_up = user_fn_full(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol + h_v)
+            u_p_v_dn = user_fn_full(opt_spot, base_strike, opt_maturity, opt_rate, opt_vol - h_v)
             user_vega_unit = (u_p_v_up - u_p_v_dn) / (2.0 * h_v)
             user_vega = user_vega_unit / 100.0  # convert to per-1%-vol-point (market convention)
         except Exception:
@@ -260,7 +258,7 @@ class AdversarialEngine:
         }
 
         surface_grid = AdversarialEngine._generate_fragility_surface(
-            user_fn=user_fn,
+            user_fn=user_fn_fast,
             base_spot=base_spot,
             base_strike=base_strike,
             base_maturity=base_maturity,
